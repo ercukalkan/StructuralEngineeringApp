@@ -57,3 +57,5 @@ Thumbs.db
 appsettings.*.json
 
 .venv/
+__pycache__/
+.venv*/
