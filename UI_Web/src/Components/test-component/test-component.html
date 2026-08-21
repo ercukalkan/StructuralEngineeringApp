@@ -1,0 +1,12 @@
+<section class="response-data" aria-labelledby="response-data-title">
+  <h2 id="response-data-title">Response Data</h2>
+
+  @if (data !== null && data !== undefined) {
+    <pre class="response-data__content">{{ data | json }}</pre>
+    @if (data?.plot?.dataUrl) {
+      <img class="response-data__plot" [src]="data?.plot?.dataUrl" alt="Response plot" />
+    }
+  } @else {
+    <p class="response-data__empty">No response data available.</p>
+  }
+</section>
