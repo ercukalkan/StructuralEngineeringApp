@@ -1,10 +1,9 @@
 import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { JsonPipe } from '@angular/common';
 import { TestService } from '../../Services/test';
 
 @Component({
   selector: 'app-test-component',
-  imports: [JsonPipe],
+  imports: [],
   templateUrl: './test-component.html',
   styleUrls: ['./test-component.css'],
 })
@@ -17,7 +16,6 @@ export class TestComponent implements OnInit {
   ngOnInit() {
     this.testService.get().subscribe({
       next: (response) => {
-        debugger;
         this.data = response?.result ?? null;
         this.cdr.detectChanges();
       },
