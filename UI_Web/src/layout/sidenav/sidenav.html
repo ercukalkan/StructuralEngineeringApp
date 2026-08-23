@@ -14,10 +14,10 @@
     </div>
   </div>
 
-  <nav class="flex flex-col gap-2" aria-label="Main navigation">
+  <nav class="flex flex-1 flex-col gap-2" aria-label="Main navigation">
     @for (item of navItems; track item.label) {
       <a
-        href="#"
+        href="{{ item.href }}"
         class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition duration-200"
         [class.bg-blue-500/15]="item.active"
         [class.text-blue-100]="item.active"
@@ -31,4 +31,14 @@
       </a>
     }
   </nav>
+
+  <button
+    type="button"
+    class="mt-auto flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+    (click)="toggleTheme()"
+    aria-label="Toggle theme"
+  >
+    <span>{{ isDarkTheme ? 'Light mode' : 'Dark mode' }}</span>
+    <span class="text-base" aria-hidden="true">{{ isDarkTheme ? '☀️' : '🌙' }}</span>
+  </button>
 </aside>

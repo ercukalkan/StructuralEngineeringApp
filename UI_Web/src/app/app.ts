@@ -5,7 +5,7 @@ import { Sidenav } from '../layout/sidenav/sidenav';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TestComponent, Sidenav],
+  imports: [RouterOutlet, Sidenav],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
 })

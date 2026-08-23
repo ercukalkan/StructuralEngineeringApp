@@ -5,13 +5,20 @@ import { Component } from '@angular/core';
   selector: 'app-sidenav',
   imports: [CommonModule],
   templateUrl: './sidenav.html',
-  styleUrl: './sidenav.css',
+  styleUrls: ['./sidenav.css'],
 })
 export class Sidenav {
+  isDarkTheme = false;
+
   navItems = [
-    { label: 'Dashboard', icon: '⌂', active: true },
-    { label: 'Projects', icon: '▣', active: false },
-    { label: 'Calculations', icon: '◫', active: false },
-    { label: 'Reports', icon: '◌', active: false },
+    { label: 'Dashboard', icon: '⌂', active: true, href: '/dashboard' },
+    { label: 'Projects', icon: '▣', active: false, href: '/projects' },
+    { label: 'Calculations', icon: '◫', active: false, href: '/calculations' },
+    { label: 'Reports', icon: '◌', active: false, href: '/reports' },
   ];
+
+  toggleTheme(): void {
+    this.isDarkTheme = !this.isDarkTheme;
+    document.body.classList.toggle('dark', this.isDarkTheme);
+  }
 }

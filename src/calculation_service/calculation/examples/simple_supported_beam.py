@@ -70,8 +70,8 @@ def main():
         shear[element_tag] = -force[4]
         moment[element_tag] = -force[5]
 
-    left_vertical_reaction = float(ops.nodeReaction(1, 2))
-    right_vertical_reaction = float(ops.nodeReaction(elements + 1, 2))
+    left_reactions = ops.nodeReaction(1)
+    right_reactions = ops.nodeReaction(elements + 1)
 
     fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 8), constrained_layout=True)
     diagrams = (
@@ -99,9 +99,9 @@ def main():
     points = [
         {
             "x": float(position),
-            "axial": float(axial_value),
-            "shear": float(shear_value),
-            "moment": float(moment_value),
+            "axial": round(float(axial_value), 2),
+            "shear": round(float(shear_value), 2),
+            "moment": round(float(moment_value), 2),
         }
         for position, axial_value, shear_value, moment_value in zip(
             x, axial, shear, moment
@@ -113,8 +113,8 @@ def main():
         "beam": {"length": length, "elements": elements},
         "points": points,
         "supportReactions": {
-            "left": {"vertical": left_vertical_reaction},
-            "right": {"vertical": right_vertical_reaction},
+            "left": {"vertical": round(left_reactions[1], 2), "horizontal": round(left_reactions[0], 2), "moment": round(left_reactions[2], 2)},
+            "right": {"vertical": round(right_reactions[1], 2), "horizontal": round(right_reactions[0], 2), "moment": round(right_reactions[2], 2)},
         },
         "plot": {"format": "png", "dataUrl": plot_data_url},
     }

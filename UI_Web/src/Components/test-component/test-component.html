@@ -1,259 +1,121 @@
-<body class="min-h-screen bg-slate-950 text-slate-100 font-sans">
-  <!-- Background decorations -->
-  <div class="fixed inset-0 -z-10 overflow-hidden">
-    <div class="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl"></div>
-
-    <div class="absolute top-1/3 -left-40 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl"></div>
-
-    <div class="absolute bottom-0 right-1/3 h-96 w-96 rounded-full bg-cyan-600/10 blur-3xl"></div>
-  </div>
-
-  <!-- Main container -->
-  <main class="mx-auto max-w-6xl px-6 py-12 lg:px-8">
+<div class="analysis-container">
+  @if (response?.result; as result) {
     <!-- Header -->
-    <header class="mb-10">
-      <div class="mb-5 flex items-center gap-3">
-        <span class="h-2 w-2 rounded-full bg-indigo-400"></span>
-
-        <span class="text-sm font-medium uppercase tracking-[0.25em] text-indigo-300">
-          Details
-        </span>
+    <header class="analysis-header">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6" />
+        </svg>
       </div>
-
-      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-        <div>
-          <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Project Information</h1>
-
-          <p class="mt-4 max-w-2xl text-base leading-7 text-slate-400">
-            A detailed overview containing the project's key information and visual documentation.
-          </p>
-        </div>
-
-        <div
-          class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 backdrop-blur-xl"
-        >
-          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-
-          Active
-        </div>
+      <div class="header-text">
+        <h1>Simply Supported Beam Analysis</h1>
+        <p class="subtitle">Structural calculation results</p>
       </div>
     </header>
 
-    <!-- Main information card -->
-    <section
-      class="overflow-hidden rounded-3xl border border-white/10 bg-white/4 shadow-2xl shadow-black/20 backdrop-blur-xl"
-    >
-      <!-- Card header -->
-      <div class="border-b border-white/10 px-6 py-6 sm:px-8">
-        <div class="flex items-center gap-4">
-          <div
-            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-400/20"
-          >
-            <svg
-              class="h-6 w-6 text-indigo-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M9 12h6m-6 4h6M9 8h6m5 12H4a2 2 0 01-2-2V6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-
-          <div>
-            <h2 class="text-lg font-semibold">General Information</h2>
-
-            <p class="text-sm text-slate-500">Key details and specifications</p>
-          </div>
+    <!-- Units badges -->
+    <section class="card units-card">
+      <h2 class="card-title">
+        <span class="title-bar"></span>
+        Units
+      </h2>
+      <div class="units-grid">
+        <div class="unit-chip">
+          <span class="unit-label">Length</span>
+          <span class="unit-value">{{ result.units.length }}</span>
         </div>
-      </div>
-
-      <!-- Information -->
-      <div
-        class="grid grid-cols-1 divide-y divide-white/10 md:grid-cols-2 md:divide-y-0 md:gap-x-12 md:px-8"
-      >
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Project Name
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            Aurora Platform
-          </p>
+        <div class="unit-chip">
+          <span class="unit-label">Force</span>
+          <span class="unit-value">{{ result.units.force }}</span>
         </div>
-
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Project Code
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            APR-2026-001
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Category
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            Software Development
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Version
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            v2.4.1
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Created By
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            John Doe
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6 md:border-b md:border-white/10">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Created Date
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            August 21, 2026
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Location
-          </p>
-
-          <p class="text-base font-medium text-slate-100 transition group-hover:text-indigo-300">
-            Istanbul, Türkiye
-          </p>
-        </div>
-
-        <!-- Field -->
-        <div class="group py-6">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Status
-          </p>
-
-          <div class="flex items-center gap-2">
-            <span
-              class="h-2 w-2 rounded-full bg-emerald-400 shadow-lg shadow-emerald-500/40"
-            ></span>
-
-            <span class="text-base font-medium text-emerald-300"> Active </span>
-          </div>
+        <div class="unit-chip">
+          <span class="unit-label">Moment</span>
+          <span class="unit-value">{{ result.units.moment }}</span>
         </div>
       </div>
     </section>
 
-    <!-- Secondary information section -->
-    <section
-      class="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-white/4 shadow-xl backdrop-blur-xl"
-    >
-      <div class="border-b border-white/10 px-6 py-6 sm:px-8">
-        <h2 class="text-lg font-semibold">Additional Information</h2>
-
-        <p class="mt-1 text-sm text-slate-500">Additional project properties</p>
-      </div>
-
-      <div class="grid grid-cols-1 gap-x-12 px-6 sm:px-8 md:grid-cols-3">
-        <div class="py-6">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Technology
-          </p>
-
-          <p class="font-medium">.NET / Angular</p>
-        </div>
-
-        <div class="py-6">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Database
-          </p>
-
-          <p class="font-medium">Microsoft SQL Server</p>
-        </div>
-
-        <div class="py-6">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Environment
-          </p>
-
-          <p class="font-medium">Production</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Image section -->
-    <section class="mt-8">
-      <!-- Section heading -->
-      <div class="mb-5 flex items-end justify-between">
-        <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-indigo-300">
-            Gallery
-          </p>
-
-          <h2 class="text-2xl font-bold tracking-tight">Visual Documentation</h2>
-        </div>
-
-        <span class="hidden text-sm text-slate-500 sm:block"> 04 Images </span>
-      </div>
-
-      <!-- Image grid -->
-      <div class="grid grid-cols-1 gap-4">
-        <!-- Large image -->
-        <div
-          class="group relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900 md:row-span-2"
-        >
-          <img
-            src="{{ data.plot.dataUrl }}"
-            alt="Project workspace"
-            class="h-full min-h-105 w-full object-fill transition duration-700 group-hover:scale-105"
-          />
-
-          <div
-            class="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent"
-          ></div>
-
-          <div class="absolute bottom-0 left-0 p-6">
-            <span
-              class="rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs text-slate-200 backdrop-blur-md"
-            >
-              Featured
-            </span>
-
-            <h3 class="mt-3 text-xl font-semibold">Main Project View</h3>
+    <!-- Beam properties + Support reactions (left) | Diagram (right) -->
+    <div class="two-col">
+      <div class="left-stack">
+        <section class="card props-card">
+          <h2 class="card-title">
+            <span class="title-bar"></span>
+            Beam Properties
+          </h2>
+          <div class="prop-row">
+            <div class="prop-item">
+              <span class="prop-label">Length</span>
+              <span class="prop-value">
+                {{ result.beam.length }}
+                <small>{{ result.units.length }}</small>
+              </span>
+            </div>
+            <div class="prop-item">
+              <span class="prop-label">Number of Elements</span>
+              <span class="prop-value">{{ result.beam.elements }}</span>
+            </div>
           </div>
+        </section>
+
+        <section class="card reactions-card">
+          <h2 class="card-title">
+            <span class="title-bar"></span>
+            Support Reactions
+          </h2>
+          <div class="reactions-row">
+            <div class="reaction-pill left">
+              <span class="reaction-tag">Left</span>
+              <span class="reaction-value">
+                {{ result.supportReactions.left.vertical }}
+                <small>{{ result.units.force }}</small>
+              </span>
+            </div>
+            <div class="reaction-pill right">
+              <span class="reaction-tag">Right</span>
+              <span class="reaction-value">
+                {{ result.supportReactions.right.vertical }}
+                <small>{{ result.units.force }}</small>
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Plot -->
+      <section class="card plot-card">
+        <h2 class="card-title">
+          <span class="title-bar"></span>
+          Diagram
+        </h2>
+        <div class="plot-wrapper">
+          @if (result.plot; as plot) {
+            <img [src]="plot.dataUrl" alt="Beam analysis diagram" />
+          } @else {
+            <div class="empty-state">Plot not available.</div>
+          }
         </div>
+      </section>
+    </div>
+
+    <!-- Internal forces -->
+    <section class="card forces-card">
+      <h2 class="card-title">
+        <span class="title-bar"></span>
+        Internal Forces at Each Node
+      </h2>
+      <div class="forces-list">
+        @for (force of result.points ?? []; track $index) {
+          <div class="force-item">
+            <span class="force-index">{{ $index }}</span>
+            <span class="force-value">{{ force | json }}</span>
+          </div>
+        } @empty {
+          <div class="empty-state">No internal force data available.</div>
+        }
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="mt-10 border-t border-white/10 pt-6 text-center">
-      <p class="text-xs text-slate-600">Last updated · August 21, 2026</p>
-    </footer>
-  </main>
-</body>
+  } @else {
+    <div class="empty-state">Analysis results are not available yet.</div>
+  }
+</div>
