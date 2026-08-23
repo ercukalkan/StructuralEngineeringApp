@@ -11,4 +11,4 @@ add_cors_middleware(app)
 @app.get("/simple_supported_beam")
 def simple_supported_beam():
     """Return the result of the simply supported beam calculation."""
-    return {"result": get_simple_supported_beam_result()}
+    return get_simple_supported_beam_result()
