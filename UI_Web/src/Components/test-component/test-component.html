@@ -1,81 +1,117 @@
-<div class="analysis-container">
+<div
+  class="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5 bg-linear-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] p-6"
+>
   @if (response; as result) {
     <!-- Header -->
-    <header class="analysis-header">
-      <div class="header-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <header
+      class="flex items-center gap-4 rounded-2xl border border-cyan-400/40 bg-linear-to-r from-cyan-400/15 to-lime-300/10 px-7 py-6 shadow-xl shadow-black/30 backdrop-blur-md"
+    >
+      <div
+        class="grid h-13 w-13 shrink-0 place-items-center rounded-xl bg-linear-to-br from-cyan-400 to-blue-600 text-white shadow-lg shadow-blue-600/50"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-7 w-7">
           <path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6" />
         </svg>
       </div>
-      <div class="header-text">
-        <h1>Simply Supported Beam Analysis</h1>
-        <p class="subtitle">Structural calculation results</p>
+      <div>
+        <h1 class="text-xl font-semibold tracking-wide text-sky-50">
+          Simply Supported Beam Analysis
+        </h1>
+        <p class="mt-1 text-sm text-sky-200/70">Structural calculation results</p>
       </div>
     </header>
 
     <!-- Units badges -->
-    <section class="card units-card">
-      <h2 class="card-title">
-        <span class="title-bar"></span>
+    <section
+      class="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-black/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40"
+    >
+      <h2 class="mb-4 flex items-center gap-2.5 text-base font-semibold tracking-wide text-sky-100">
+        <span class="h-4.5 w-1 rounded bg-linear-to-b from-cyan-400 to-lime-300"></span>
         Units
       </h2>
-      <div class="units-grid">
-        <div class="unit-chip">
-          <span class="unit-label">Length</span>
-          <span class="unit-value">{{ result.units.length }}</span>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+        <div
+          class="flex flex-col items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-3.5"
+        >
+          <span class="text-xs tracking-widest text-sky-300/70 uppercase">Length</span>
+          <span class="text-lg font-bold text-cyan-400">{{ result.units.length }}</span>
         </div>
-        <div class="unit-chip">
-          <span class="unit-label">Force</span>
-          <span class="unit-value">{{ result.units.force }}</span>
+        <div
+          class="flex flex-col items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-3.5"
+        >
+          <span class="text-xs tracking-widest text-sky-300/70 uppercase">Force</span>
+          <span class="text-lg font-bold text-cyan-400">{{ result.units.force }}</span>
         </div>
-        <div class="unit-chip">
-          <span class="unit-label">Moment</span>
-          <span class="unit-value">{{ result.units.moment }}</span>
+        <div
+          class="flex flex-col items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-3.5"
+        >
+          <span class="text-xs tracking-widest text-sky-300/70 uppercase">Moment</span>
+          <span class="text-lg font-bold text-cyan-400">{{ result.units.moment }}</span>
         </div>
       </div>
     </section>
 
     <!-- Beam properties + Support reactions (left) | Diagram (right) -->
-    <div class="two-col">
-      <div class="left-stack">
-        <section class="card props-card">
-          <h2 class="card-title">
-            <span class="title-bar"></span>
+    <div class="grid items-stretch gap-5 md:grid-cols-[minmax(280px,2fr)_3fr]">
+      <div class="flex flex-col gap-5">
+        <section
+          class="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-black/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40"
+        >
+          <h2
+            class="mb-4 flex items-center gap-2.5 text-base font-semibold tracking-wide text-sky-100"
+          >
+            <span class="h-4.5 w-1 rounded bg-linear-to-b from-cyan-400 to-lime-300"></span>
             Beam Properties
           </h2>
-          <div class="prop-row">
-            <div class="prop-item">
-              <span class="prop-label">Length</span>
-              <span class="prop-value">
+          <div class="flex flex-wrap gap-4">
+            <div
+              class="flex min-w-32.5 flex-1 flex-col gap-1.5 rounded-xl border border-lime-300/25 bg-lime-300/10 p-3.5"
+            >
+              <span class="text-xs tracking-widest text-lime-200/70 uppercase">Length</span>
+              <span class="text-xl font-bold text-lime-300">
                 {{ result.beam.length }}
-                <small>{{ result.units.length }}</small>
+                <small class="ml-1 text-xs font-medium text-lime-100/70">{{
+                  result.units.length
+                }}</small>
               </span>
             </div>
-            <div class="prop-item">
-              <span class="prop-label">Number of Elements</span>
-              <span class="prop-value">{{ result.beam.elements }}</span>
+            <div
+              class="flex min-w-32.5 flex-1 flex-col gap-1.5 rounded-xl border border-lime-300/25 bg-lime-300/10 p-3.5"
+            >
+              <span class="text-xs tracking-widest text-lime-200/70 uppercase"
+                >Number of Elements</span
+              >
+              <span class="text-xl font-bold text-lime-300">{{ result.beam.elements }}</span>
             </div>
           </div>
         </section>
 
-        <section class="card reactions-card">
-          <h2 class="card-title">
-            <span class="title-bar"></span>
+        <section
+          class="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-black/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40"
+        >
+          <h2
+            class="mb-4 flex items-center gap-2.5 text-base font-semibold tracking-wide text-sky-100"
+          >
+            <span class="h-4.5 w-1 rounded bg-linear-to-b from-cyan-400 to-lime-300"></span>
             Support Reactions
           </h2>
-          <div class="reactions-row">
-            <div class="reaction-pill left">
-              <span class="reaction-tag">Left</span>
-              <span class="reaction-value">
+          <div class="flex flex-wrap gap-4">
+            <div
+              class="flex min-w-32.5 flex-1 flex-col gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3.5"
+            >
+              <span class="text-xs tracking-widest text-amber-200/70 uppercase">Left</span>
+              <span class="text-xl font-bold text-amber-400">
                 {{ result.supportReactions.left.vertical }}
-                <small>{{ result.units.force }}</small>
+                <small class="ml-1 text-xs font-medium opacity-80">{{ result.units.force }}</small>
               </span>
             </div>
-            <div class="reaction-pill right">
-              <span class="reaction-tag">Right</span>
-              <span class="reaction-value">
+            <div
+              class="flex min-w-32.5 flex-1 flex-col gap-1.5 rounded-xl border border-red-400/30 bg-red-400/10 p-3.5"
+            >
+              <span class="text-xs tracking-widest text-red-200/70 uppercase">Right</span>
+              <span class="text-xl font-bold text-red-400">
                 {{ result.supportReactions.right.vertical }}
-                <small>{{ result.units.force }}</small>
+                <small class="ml-1 text-xs font-medium opacity-80">{{ result.units.force }}</small>
               </span>
             </div>
           </div>
@@ -83,39 +119,60 @@
       </div>
 
       <!-- Plot -->
-      <section class="card plot-card">
-        <h2 class="card-title">
-          <span class="title-bar"></span>
+      <section
+        class="flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-black/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40"
+      >
+        <h2
+          class="mb-4 flex items-center gap-2.5 text-base font-semibold tracking-wide text-sky-100"
+        >
+          <span class="h-4.5 w-1 rounded bg-linear-to-b from-cyan-400 to-lime-300"></span>
           Diagram
         </h2>
-        <div class="plot-wrapper">
+        <div
+          class="flex min-h-45 flex-1 items-center justify-center overflow-hidden rounded-xl bg-white/90 p-3"
+        >
           @if (result.plot; as plot) {
-            <img [src]="plot.dataUrl" alt="Beam analysis diagram" />
+            <img
+              [src]="plot.dataUrl"
+              alt="Beam analysis diagram"
+              class="h-auto max-w-full rounded-lg"
+            />
           } @else {
-            <div class="empty-state">Plot not available.</div>
+            <div class="p-6 text-center text-sm text-slate-500 italic">Plot not available.</div>
           }
         </div>
       </section>
     </div>
 
     <!-- Internal forces -->
-    <section class="card forces-card">
-      <h2 class="card-title">
-        <span class="title-bar"></span>
+    <section
+      class="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-lg shadow-black/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40"
+    >
+      <h2 class="mb-4 flex items-center gap-2.5 text-base font-semibold tracking-wide text-sky-100">
+        <span class="h-4.5 w-1 rounded bg-linear-to-b from-cyan-400 to-lime-300"></span>
         Internal Forces at Each Node
       </h2>
-      <div class="forces-list">
+      <div class="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1.5">
         @for (force of result.points ?? []; track $index) {
-          <div class="force-item">
-            <span class="force-index">{{ $index }}</span>
-            <span class="force-value">{{ force | json }}</span>
+          <div
+            class="flex items-center gap-3.5 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 transition hover:bg-cyan-400/10"
+          >
+            <span
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-linear-to-br from-cyan-400 to-lime-300 text-xs font-bold text-slate-900"
+              >{{ $index }}</span
+            >
+            <span class="font-mono text-sm text-sky-100">{{ force | json }}</span>
           </div>
         } @empty {
-          <div class="empty-state">No internal force data available.</div>
+          <div class="p-6 text-center text-sm text-slate-400 italic">
+            No internal force data available.
+          </div>
         }
       </div>
     </section>
   } @else {
-    <div class="empty-state">Analysis results are not available yet.</div>
+    <div class="p-6 text-center text-sm text-slate-400 italic">
+      Analysis results are not available yet.
+    </div>
   }
 </div>
