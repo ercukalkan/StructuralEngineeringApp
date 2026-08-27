@@ -9,7 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
 
-def main(length=8.0, elements=20, distributed_load=-20.0e3):
+def main(length=8.0, elements=20, distributed_load=-20.0e3, supports=None):
     # Beam properties (consistent SI units: m, N, Pa)
     elastic_modulus = 210.0e9
     area = 0.012
@@ -17,15 +17,43 @@ def main(length=8.0, elements=20, distributed_load=-20.0e3):
     length = float(length)
     distributed_load = float(distributed_load)
     elements = int(elements)
+    supports = supports or []
 
     ops.wipe()
     ops.model("basic", "-ndm", 2, "-ndf", 3)
 
-    # Left support is pinned; right support is a vertical roller.
     for node_tag in range(elements + 1):
         ops.node(node_tag + 1, length * node_tag / elements, 0.0)
-    ops.fix(1, 1, 1, 1)
-    ops.fix(elements + 1, 1, 1, 1)
+
+    if supports:
+        support_map = {}
+        for support in supports:
+            if not isinstance(support, dict):
+                continue
+
+            location = float(support.get("location", 0.0))
+            dofs = support.get("degreesOfFreedom", {}) or {}
+            if not isinstance(dofs, dict):
+                dofs = {}
+
+            x_position = max(0.0, min(float(location), length))
+            node_tag = int(round((x_position / length) * elements)) + 1 if length > 0 else 1
+            node_tag = max(1, min(node_tag, elements + 1))
+
+            support_info = support_map.setdefault(
+                node_tag,
+                {"location": x_position, "fixity": [0, 0, 0]},
+            )
+            current_fix = support_info["fixity"]
+            current_fix[0] = current_fix[0] or int(bool(dofs.get("N", False)))
+            current_fix[1] = current_fix[1] or int(bool(dofs.get("V", False)))
+            current_fix[2] = current_fix[2] or int(bool(dofs.get("M", False)))
+
+        for node_tag, support_info in support_map.items():
+            ops.fix(node_tag, *support_info["fixity"])
+    else:
+        ops.fix(1, 1, 1, 1)
+        ops.fix(elements + 1, 1, 1, 1)
 
     ops.geomTransf("Linear", 1)
     for element_tag in range(1, elements + 1):
@@ -69,8 +97,41 @@ def main(length=8.0, elements=20, distributed_load=-20.0e3):
         shear[element_tag] = -force[4]
         moment[element_tag] = -force[5]
 
-    left_reactions = ops.nodeReaction(1)
-    right_reactions = ops.nodeReaction(elements + 1)
+    support_reactions = []
+    if supports:
+        for node_tag, info in support_map.items():
+            reactions = ops.nodeReaction(node_tag)
+            support_reactions.append(
+                {
+                    "location": round(float(info["location"]), 2),
+                    "reactions": {
+                        "horizontal": round(float(reactions[0]), 2),
+                        "vertical": round(float(reactions[1]), 2),
+                        "moment": round(float(reactions[2]), 2),
+                    },
+                }
+            )
+    else:
+        left_reactions = ops.nodeReaction(1)
+        right_reactions = ops.nodeReaction(elements + 1)
+        support_reactions = [
+            {
+                "location": 0.0,
+                "reactions": {
+                    "horizontal": round(float(left_reactions[0]), 2),
+                    "vertical": round(float(left_reactions[1]), 2),
+                    "moment": round(float(left_reactions[2]), 2),
+                },
+            },
+            {
+                "location": round(float(length), 2),
+                "reactions": {
+                    "horizontal": round(float(right_reactions[0]), 2),
+                    "vertical": round(float(right_reactions[1]), 2),
+                    "moment": round(float(right_reactions[2]), 2),
+                },
+            },
+        ]
 
     fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 8), constrained_layout=True)
     diagrams = (
@@ -123,10 +184,7 @@ def main(length=8.0, elements=20, distributed_load=-20.0e3):
             }
             },
         "points": points,
-        "supportReactions": {
-            "left": {"vertical": round(left_reactions[1], 2), "horizontal": round(left_reactions[0], 2), "moment": round(left_reactions[2], 2)},
-            "right": {"vertical": round(right_reactions[1], 2), "horizontal": round(right_reactions[0], 2), "moment": round(right_reactions[2], 2)},
-        },
+        "supportReactions": support_reactions,
         "plot": {"format": "png", "dataUrl": plot_data_url},
     }
 

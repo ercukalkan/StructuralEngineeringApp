@@ -56,6 +56,82 @@
         />
       </label>
     </div>
+
+    <div class="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h3 class="text-base font-semibold text-white">Supports</h3>
+        <button
+          type="button"
+          class="rounded-xl border border-blue-400/60 bg-blue-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-blue-100 transition hover:bg-blue-500/20"
+          (click)="addSupport()"
+        >
+          Add support
+        </button>
+      </div>
+
+      @for (support of form.supports; track support; let i = $index) {
+        <div class="mt-3 rounded-xl border border-slate-700/80 bg-slate-900/60 p-3">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-end">
+              <label class="flex flex-1 flex-col gap-2 text-sm font-medium text-slate-200">
+                <span>Support location</span>
+                <input
+                  type="number"
+                  [(ngModel)]="support.location"
+                  step="0.1"
+                  min="0"
+                  [max]="form.length"
+                  class="rounded-xl border border-slate-600 bg-slate-900/70 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+              </label>
+
+              <div class="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+                <label
+                  class="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="support.degreesOfFreedom.N"
+                    class="h-4 w-4 accent-blue-500"
+                  />
+                  <span>N</span>
+                </label>
+
+                <label
+                  class="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="support.degreesOfFreedom.V"
+                    class="h-4 w-4 accent-blue-500"
+                  />
+                  <span>V</span>
+                </label>
+
+                <label
+                  class="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="support.degreesOfFreedom.M"
+                    class="h-4 w-4 accent-blue-500"
+                  />
+                  <span>M</span>
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="rounded-xl border border-red-500/60 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-100 transition hover:bg-red-500/20"
+              (click)="removeSupport(i)"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      }
+    </div>
   </section>
 
   <div class="mx-auto max-w-6xl">
@@ -92,50 +168,37 @@
       <div class="mb-5 grid gap-4 md:grid-cols-3">
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">Length</span>
-          <strong class="mt-2 block text-lg text-white">{{ result.beam?.length ?? '—' }} m</strong>
+          <strong class="mt-2 block text-lg text-white">{{ result.beam.length }} m</strong>
         </div>
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">Elements</span>
-          <strong class="mt-2 block text-lg text-white">{{ result.beam?.elements ?? '—' }}</strong>
+          <strong class="mt-2 block text-lg text-white">{{ result.beam.elements }}</strong>
         </div>
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">UDL</span>
           <strong class="mt-2 block text-lg text-white"
-            >{{ result.beam?.distributedLoad?.magnitude ?? '—' }} N/m</strong
+            >{{ result.beam.distributedLoad.magnitude }} N/m</strong
           >
         </div>
       </div>
 
-      <div class="mb-5 grid gap-4 lg:grid-cols-2">
-        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
-          <h4 class="mb-3 text-base font-semibold text-white">Left support</h4>
-          <p class="text-sm text-slate-300">
-            Vertical: {{ result.supportReactions?.left?.vertical ?? '—' }} N
-          </p>
-          <p class="text-sm text-slate-300">
-            Horizontal: {{ result.supportReactions?.left?.horizontal ?? '—' }} N
-          </p>
-          <p class="text-sm text-slate-300">
-            Moment: {{ result.supportReactions?.left?.moment ?? '—' }} N·m
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
-          <h4 class="mb-3 text-base font-semibold text-white">Right support</h4>
-          <p class="text-sm text-slate-300">
-            Vertical: {{ result.supportReactions?.right?.vertical ?? '—' }} N
-          </p>
-          <p class="text-sm text-slate-300">
-            Horizontal: {{ result.supportReactions?.right?.horizontal ?? '—' }} N
-          </p>
-          <p class="text-sm text-slate-300">
-            Moment: {{ result.supportReactions?.right?.moment ?? '—' }} N·m
-          </p>
-        </div>
+      <div class="space-y-4">
+        @for (supportReaction of supportReactionRows; track supportReaction.location) {
+          <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+            <h4 class="mb-3 text-base font-semibold text-white">
+              Support at {{ supportReaction.location }} m
+            </h4>
+            <div class="grid grid-cols-3 gap-3 text-sm text-slate-300">
+              <p>Horizontal: {{ supportReaction.reactions.horizontal }} N</p>
+              <p>Vertical: {{ supportReaction.reactions.vertical }} N</p>
+              <p>Moment: {{ supportReaction.reactions.moment }} N·m</p>
+            </div>
+          </div>
+        }
       </div>
 
-      @if (result.plot?.dataUrl) {
-        <div class="overflow-hidden rounded-2xl border border-slate-700/80 bg-white">
+      @if (result.plot.dataUrl) {
+        <div class="overflow-hidden mt-4 rounded-2xl border border-slate-700/80 bg-white">
           <img
             [src]="result.plot.dataUrl"
             alt="Simply supported beam force diagram"

@@ -2,6 +2,36 @@ export interface AnalysisRequest {
   length: number;
   elements: number;
   uniformLoad: number;
+  supports?: Array<{
+    location: number;
+    degreesOfFreedom: {
+      N: boolean;
+      V: boolean;
+      M: boolean;
+    };
+  }>;
+}
+
+export interface SupportReactionEntry {
+  location: number;
+  reactions: {
+    vertical: number;
+    horizontal: number;
+    moment: number;
+  };
+}
+
+export interface LegacySupportReactions {
+  left: {
+    vertical: number;
+    horizontal: number;
+    moment: number;
+  };
+  right: {
+    vertical: number;
+    horizontal: number;
+    moment: number;
+  };
 }
 
 export interface AnalysisResponse {
@@ -20,19 +50,8 @@ export interface AnalysisResponse {
     };
   };
   points?: Points[];
-  supportReactions: {
-    left: {
-      vertical: number;
-      horizontal: number;
-      moment: number;
-    };
-    right: {
-      vertical: number;
-      horizontal: number;
-      moment: number;
-    };
-  };
-  plot?: {
+  supportReactions: SupportReactionEntry[] | LegacySupportReactions;
+  plot: {
     format: string;
     dataUrl: string;
   };

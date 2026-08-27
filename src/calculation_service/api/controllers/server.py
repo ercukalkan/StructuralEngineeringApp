@@ -22,11 +22,11 @@ def simple_supported_beam_post(payload: dict[str, Any] | None = None):
     payload = payload or {}
     length = float(payload.get("length", 8.0))
     elements = int(payload.get("elements", payload.get("numberOfElements", 20)))
-    uniform_load = float(
-        payload.get("uniformLoad", -20e3)
-    )
+    uniform_load = float(payload.get("uniformLoad", -20e3))
+    supports = payload.get("supports") or []
     return get_simple_supported_beam_result(
         length=length,
         elements=elements,
         distributed_load=uniform_load,
+        supports=supports,
     )
