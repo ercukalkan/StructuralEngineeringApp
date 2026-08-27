@@ -7,6 +7,11 @@ export interface AnalysisResponse {
   beam: {
     length: number;
     elements: number;
+    distributedLoad: {
+      magnitude: number;
+      startPosition: number;
+      endPosition: number;
+    };
   };
   points?: Points[];
   supportReactions: {

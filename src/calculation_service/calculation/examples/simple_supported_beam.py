@@ -9,13 +9,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
 
-
 def main():
     # Beam properties (consistent SI units: m, N, Pa)
-    length = 8.0
     elastic_modulus = 210.0e9
     area = 0.012
     inertia = 8.0e-5
+    length = 8.0
     distributed_load = -20.0e3  # downward load, N/m
     elements = 20
 
@@ -63,7 +62,7 @@ def main():
 
     # eleForce gives [N_i, V_i, M_i, N_j, V_j, M_j] in local coordinates.
     for element_tag in range(1, elements + 1):
-        force = ops.eleForce(element_tag)
+        force = ops.eleForce(element_tag) # *********************************
         if element_tag == 1:
             axial[0], shear[0], moment[0] = force[:3]
         axial[element_tag] = -force[3]
@@ -109,8 +108,20 @@ def main():
     ]
 
     return {
-        "units": {"length": "m", "force": "N", "moment": "N m"},
-        "beam": {"length": length, "elements": elements},
+        "units": {
+            "length": "m", 
+            "force": "N", 
+            "moment": "N m"
+            },
+        "beam": {
+            "length": length, 
+            "elements": elements, 
+            "distributedLoad": {
+                "magnitude": distributed_load,
+                "startPosition": 0.0,
+                "endPosition": length
+            }
+            },
         "points": points,
         "supportReactions": {
             "left": {"vertical": round(left_reactions[1], 2), "horizontal": round(left_reactions[0], 2), "moment": round(left_reactions[2], 2)},
