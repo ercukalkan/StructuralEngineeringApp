@@ -9,14 +9,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
 
-def main():
+def main(length=8.0, elements=20, distributed_load=-20.0e3):
     # Beam properties (consistent SI units: m, N, Pa)
     elastic_modulus = 210.0e9
     area = 0.012
     inertia = 8.0e-5
-    length = 8.0
-    distributed_load = -20.0e3  # downward load, N/m
-    elements = 20
+    length = float(length)
+    distributed_load = float(distributed_load)
+    elements = int(elements)
 
     ops.wipe()
     ops.model("basic", "-ndm", 2, "-ndf", 3)
@@ -24,8 +24,8 @@ def main():
     # Left support is pinned; right support is a vertical roller.
     for node_tag in range(elements + 1):
         ops.node(node_tag + 1, length * node_tag / elements, 0.0)
-    ops.fix(1, 1, 1, 0)
-    ops.fix(elements + 1, 0, 1, 0)
+    ops.fix(1, 1, 1, 1)
+    ops.fix(elements + 1, 1, 1, 1)
 
     ops.geomTransf("Linear", 1)
     for element_tag in range(1, elements + 1):

@@ -10,4 +10,8 @@ export class TestService {
   get<T>() {
     return this.http.get<T>('http://localhost:8000/simple_supported_beam');
   }
+
+  post<T>(data: any) {
+    return this.http.post<T>('http://localhost:8000/simple_supported_beam', data);
+  }
 }

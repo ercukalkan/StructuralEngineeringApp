@@ -1,3 +1,9 @@
+export interface AnalysisRequest {
+  length: number;
+  elements: number;
+  uniformLoad: number;
+}
+
 export interface AnalysisResponse {
   units: {
     length: string;

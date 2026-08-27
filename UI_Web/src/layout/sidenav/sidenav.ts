@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-sidenav',
@@ -8,6 +9,8 @@ import { Component } from '@angular/core';
   styleUrls: ['./sidenav.css'],
 })
 export class Sidenav {
+  private readonly router = inject(Router);
+
   isDarkTheme = false;
 
   navItems = [
@@ -16,6 +19,10 @@ export class Sidenav {
     { label: 'Calculations', icon: '◫', active: false, href: '/calculations' },
     { label: 'Reports', icon: '◌', active: false, href: '/reports' },
   ];
+
+  goToProjects(): void {
+    this.router.navigate(['/projects']);
+  }
 
   toggleTheme(): void {
     this.isDarkTheme = !this.isDarkTheme;

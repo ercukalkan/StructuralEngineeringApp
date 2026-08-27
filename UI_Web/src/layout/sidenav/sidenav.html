@@ -34,7 +34,17 @@
 
   <button
     type="button"
-    class="mt-auto flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+    class="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 cursor-pointer"
+    aria-label="Create new project"
+    (click)="goToProjects()"
+  >
+    <span class="text-base" aria-hidden="true">＋</span>
+    <span>New Project</span>
+  </button>
+
+  <button
+    type="button"
+    class="mt-auto flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700 cursor-pointer"
     (click)="toggleTheme()"
     aria-label="Toggle theme"
   >

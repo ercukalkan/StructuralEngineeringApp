@@ -1,0 +1,148 @@
+<div class="min-h-full w-full bg-linear-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] p-6">
+  <section
+    class="mx-auto w-full max-w-6xl rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20"
+  >
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">
+          Structural calculation
+        </p>
+        <h2 class="text-2xl font-bold text-white">Simply Supported Beam</h2>
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+        (click)="runCalculation()"
+        [disabled]="isLoading"
+      >
+        {{ isLoading ? 'Running...' : 'Run' }}
+      </button>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+        <span>Length</span>
+        <input
+          type="number"
+          [(ngModel)]="form.length"
+          step="0.1"
+          min="0.1"
+          placeholder="8"
+          class="rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+      </label>
+
+      <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+        <span>Number of elements</span>
+        <input
+          type="number"
+          [(ngModel)]="form.elements"
+          step="1"
+          min="2"
+          placeholder="20"
+          class="rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+      </label>
+
+      <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+        <span>Uniform distributed load</span>
+        <input
+          type="number"
+          [(ngModel)]="form.uniformLoad"
+          step="0.1"
+          placeholder="-20"
+          class="rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+      </label>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-6xl">
+    @if (isLoading) {
+      <section
+        class="mt-4 rounded-2xl border border-blue-500/40 bg-blue-500/10 p-4 text-sm text-white"
+      >
+        Calculating beam response...
+      </section>
+    }
+
+    @if (errorMessage) {
+      <section
+        class="mt-4 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-100"
+      >
+        {{ errorMessage }}
+      </section>
+    }
+  </div>
+
+  @if (result) {
+    <section
+      class="mx-auto mt-4 max-w-6xl rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20"
+    >
+      <div class="mb-5 flex items-center justify-between gap-3">
+        <h3 class="text-xl font-bold text-white">Calculation results</h3>
+        <span
+          class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200"
+        >
+          Complete
+        </span>
+      </div>
+
+      <div class="mb-5 grid gap-4 md:grid-cols-3">
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <span class="block text-xs uppercase tracking-wide text-slate-400">Length</span>
+          <strong class="mt-2 block text-lg text-white">{{ result.beam?.length ?? '—' }} m</strong>
+        </div>
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <span class="block text-xs uppercase tracking-wide text-slate-400">Elements</span>
+          <strong class="mt-2 block text-lg text-white">{{ result.beam?.elements ?? '—' }}</strong>
+        </div>
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <span class="block text-xs uppercase tracking-wide text-slate-400">UDL</span>
+          <strong class="mt-2 block text-lg text-white"
+            >{{ result.beam?.distributedLoad?.magnitude ?? '—' }} N/m</strong
+          >
+        </div>
+      </div>
+
+      <div class="mb-5 grid gap-4 lg:grid-cols-2">
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <h4 class="mb-3 text-base font-semibold text-white">Left support</h4>
+          <p class="text-sm text-slate-300">
+            Vertical: {{ result.supportReactions?.left?.vertical ?? '—' }} N
+          </p>
+          <p class="text-sm text-slate-300">
+            Horizontal: {{ result.supportReactions?.left?.horizontal ?? '—' }} N
+          </p>
+          <p class="text-sm text-slate-300">
+            Moment: {{ result.supportReactions?.left?.moment ?? '—' }} N·m
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <h4 class="mb-3 text-base font-semibold text-white">Right support</h4>
+          <p class="text-sm text-slate-300">
+            Vertical: {{ result.supportReactions?.right?.vertical ?? '—' }} N
+          </p>
+          <p class="text-sm text-slate-300">
+            Horizontal: {{ result.supportReactions?.right?.horizontal ?? '—' }} N
+          </p>
+          <p class="text-sm text-slate-300">
+            Moment: {{ result.supportReactions?.right?.moment ?? '—' }} N·m
+          </p>
+        </div>
+      </div>
+
+      @if (result.plot?.dataUrl) {
+        <div class="overflow-hidden rounded-2xl border border-slate-700/80 bg-white">
+          <img
+            [src]="result.plot.dataUrl"
+            alt="Simply supported beam force diagram"
+            class="block h-auto w-full"
+          />
+        </div>
+      }
+    </section>
+  }
+</div>
