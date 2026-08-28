@@ -9,33 +9,27 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
 
-import calculation_service.core.util.unit_convert as unit_convert
+from calculation_service.core.util import *
+from calculation_service.core.util.analysis_request import AnalysisRequest
 
 
-def main(
-    length=8.0,
-    elements=20,
-    distributed_load=-20.0e3,
-    point_loads=None,
-    supports=None,
-    input_units=None,
-):
+def main(request: AnalysisRequest):
     # Beam properties (consistent SI units: m, N, Pa)
     elastic_modulus = 210.0e9
     area = 0.012
     inertia = 8.0e-5
-    length = float(length)
-    distributed_load = float(distributed_load)
-    elements = int(elements)
-    point_loads = point_loads or []
-    supports = supports or []
-    input_units = input_units or ("N", "m")
+    length = float(request.length)
+    distributed_load = float(request.uniform_load)
+    elements = int(request.elements)
+    point_loads = request.point_loads or []
+    supports = request.supports or []
+    input_units = request.input_units or ("N", "m")
 
+    force_factor, length_factor = conversion_factor(input_units)
+    length *= length_factor
     elastic_modulus *= force_factor / (length_factor ** 2)
     area *= length_factor ** 2
     inertia *= length_factor ** 4
-    force_factor, length_factor = unit_convert.conversion_factor(input_units)
-    length *= length_factor
     distributed_load *= force_factor / length_factor
     for point_load in point_loads:
         magnitude = float(point_load.get("magnitude", 0.0))
