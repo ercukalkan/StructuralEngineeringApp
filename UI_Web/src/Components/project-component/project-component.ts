@@ -24,21 +24,65 @@ interface BeamFormValues {
   uniformLoad: number;
   pointLoads: BeamPointLoad[];
   supports: BeamSupport[];
+  inputUnits: UnitPair;
 }
+
+type UnitPair = [force: string, length: string];
 
 @Component({
   selector: 'app-project-component',
   imports: [CommonModule, FormsModule],
   templateUrl: './project-component.html',
-  styleUrl: './project-component.css',
+  styleUrls: ['./project-component.css'],
 })
 export class ProjectComponent {
   private readonly test = inject(TestService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  private readonly forceConversionFactors: Record<string, number> = {
+    N: 1,
+    kN: 1e-3,
+    lb: 0.2248089431,
+    tonf: 1.019716213e-4,
+  };
+
+  private readonly lengthConversionFactors: Record<string, number> = {
+    m: 1,
+    cm: 100,
+    mm: 1000,
+    ft: 3.280839895,
+    in: 39.37007874,
+  };
+
+  readonly inputUnitOptions: UnitPair[] = [
+    ['kN', 'm'],
+    ['N', 'm'],
+    ['kN', 'cm'],
+    ['N', 'cm'],
+    ['kN', 'mm'],
+    ['N', 'mm'],
+    ['lb', 'ft'],
+    ['lb', 'in'],
+    ['tonf', 'm'],
+  ];
+
+  readonly outputUnitOptions: UnitPair[] = [
+    ['kN', 'm'],
+    ['N', 'm'],
+    ['kN', 'cm'],
+    ['N', 'cm'],
+    ['kN', 'mm'],
+    ['N', 'mm'],
+    ['lb', 'ft'],
+    ['lb', 'in'],
+    ['tonf', 'm'],
+  ];
+
   isLoading = false;
   errorMessage = '';
   result: AnalysisResponse | null = null;
+  convertedResult: AnalysisResponse | null = null;
+  outputUnits: UnitPair = this.outputUnitOptions[1];
 
   form: BeamFormValues = {
     length: 8,
@@ -49,6 +93,7 @@ export class ProjectComponent {
       { location: 0, degreesOfFreedom: { N: true, V: true, M: false } },
       { location: 8, degreesOfFreedom: { N: false, V: true, M: false } },
     ],
+    inputUnits: this.inputUnitOptions[1],
   };
 
   addSupport(): void {
@@ -107,18 +152,89 @@ export class ProjectComponent {
   }
 
   get supportReactionRows(): SupportReactionEntry[] {
-    if (!this.result?.supportReactions) {
+    if (!this.convertedResult?.supportReactions) {
       return [];
     }
 
-    if (Array.isArray(this.result.supportReactions)) {
-      return this.result.supportReactions;
+    if (Array.isArray(this.convertedResult.supportReactions)) {
+      return this.convertedResult.supportReactions;
     }
 
     return [
-      { location: 0, reactions: this.result.supportReactions.left },
-      { location: Number(this.result.beam.length), reactions: this.result.supportReactions.right },
+      { location: 0, reactions: this.convertedResult.supportReactions.left },
+      {
+        location: Number(this.convertedResult.beam.length),
+        reactions: this.convertedResult.supportReactions.right,
+      },
     ];
+  }
+
+  convertResultUnits(): void {
+    if (!this.result) {
+      return;
+    }
+
+    const [forceUnit, lengthUnit] = this.outputUnits;
+    const forceFactor = this.forceConversionFactors[forceUnit];
+    const lengthFactor = this.lengthConversionFactors[lengthUnit];
+
+    if (forceFactor === undefined || lengthFactor === undefined) {
+      this.errorMessage = 'The selected output units are not supported.';
+      return;
+    }
+
+    const convertForce = (value: number): number => value * forceFactor;
+    const convertLength = (value: number): number => value * lengthFactor;
+    const convertMoment = (value: number): number => value * forceFactor * lengthFactor;
+
+    const supportReactions = Array.isArray(this.result.supportReactions)
+      ? this.result.supportReactions.map((supportReaction) => ({
+          location: convertLength(supportReaction.location),
+          reactions: {
+            horizontal: convertForce(supportReaction.reactions.horizontal),
+            vertical: convertForce(supportReaction.reactions.vertical),
+            moment: convertMoment(supportReaction.reactions.moment),
+          },
+        }))
+      : {
+          left: {
+            horizontal: convertForce(this.result.supportReactions.left.horizontal),
+            vertical: convertForce(this.result.supportReactions.left.vertical),
+            moment: convertMoment(this.result.supportReactions.left.moment),
+          },
+          right: {
+            horizontal: convertForce(this.result.supportReactions.right.horizontal),
+            vertical: convertForce(this.result.supportReactions.right.vertical),
+            moment: convertMoment(this.result.supportReactions.right.moment),
+          },
+        };
+
+    this.convertedResult = {
+      ...this.result,
+      units: {
+        length: lengthUnit,
+        force: forceUnit,
+        moment: `${forceUnit} ${lengthUnit}`,
+      },
+      beam: {
+        ...this.result.beam,
+        length: convertLength(this.result.beam.length),
+        distributedLoad: {
+          ...this.result.beam.distributedLoad,
+          magnitude: convertForce(this.result.beam.distributedLoad.magnitude) / lengthFactor,
+          startPosition: convertLength(this.result.beam.distributedLoad.startPosition),
+          endPosition: convertLength(this.result.beam.distributedLoad.endPosition),
+        },
+      },
+      points: this.result.points?.map((point) => ({
+        ...point,
+        x: convertLength(point.x),
+        axial: convertForce(point.axial),
+        shear: convertForce(point.shear),
+        moment: convertMoment(point.moment),
+      })),
+      supportReactions,
+    };
   }
 
   runCalculation(): void {
@@ -134,6 +250,7 @@ export class ProjectComponent {
     this.test.post<AnalysisResponse>({ ...this.analysisRequest }).subscribe({
       next: (response) => {
         this.result = response;
+        this.convertedResult = response;
         this.isLoading = false;
         this.cdr.detectChanges();
       },

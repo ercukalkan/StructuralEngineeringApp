@@ -20,7 +20,7 @@
       </button>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-4">
       <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
         <span>Length</span>
         <input
@@ -54,6 +54,20 @@
           placeholder="-20"
           class="rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         />
+      </label>
+
+      <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+        <span>Units</span>
+        <select
+          [(ngModel)]="form.inputUnits"
+          class="rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-base text-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        >
+          @for (unitPair of inputUnitOptions; track unitPair.join('-')) {
+            <option [ngValue]="unitPair" class="bg-slate-800 text-white">
+              {{ unitPair.join(', ') }}
+            </option>
+          }
+        </select>
       </label>
     </div>
 
@@ -239,10 +253,12 @@
         </span>
       </div>
 
-      <div class="mb-5 grid gap-4 md:grid-cols-3">
+      <div class="mb-5 grid gap-4 md:grid-cols-4">
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">Length</span>
-          <strong class="mt-2 block text-lg text-white">{{ result.beam.length }} m</strong>
+          <strong class="mt-2 block text-lg text-white"
+            >{{ convertedResult?.beam?.length }} {{ convertedResult?.units?.length }}</strong
+          >
         </div>
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">Elements</span>
@@ -251,8 +267,22 @@
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">UDL</span>
           <strong class="mt-2 block text-lg text-white"
-            >{{ result.beam.distributedLoad.magnitude }} N/m</strong
+            >{{ convertedResult?.beam?.distributedLoad?.magnitude }}
+          </strong>
+        </div>
+        <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+          <span class="block text-xs uppercase tracking-wide text-slate-400">Units</span>
+          <select
+            [(ngModel)]="outputUnits"
+            (ngModelChange)="convertResultUnits()"
+            class="mt-2 block text-lg text-white rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2.5 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
           >
+            @for (unitPair of outputUnitOptions; track unitPair.join('-')) {
+              <option [ngValue]="unitPair" class="bg-slate-800 text-white">
+                {{ unitPair.join(', ') }}
+              </option>
+            }
+          </select>
         </div>
       </div>
 
@@ -260,12 +290,21 @@
         @for (supportReaction of supportReactionRows; track supportReaction.location) {
           <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
             <h4 class="mb-3 text-base font-semibold text-white">
-              Support at {{ supportReaction.location }} m
+              Support at {{ supportReaction.location }} {{ convertedResult?.units?.length }}
             </h4>
             <div class="grid grid-cols-3 gap-3 text-sm text-slate-300">
-              <p>Horizontal: {{ supportReaction.reactions.horizontal }} N</p>
-              <p>Vertical: {{ supportReaction.reactions.vertical }} N</p>
-              <p>Moment: {{ supportReaction.reactions.moment }} N·m</p>
+              <p>
+                Horizontal: {{ supportReaction.reactions.horizontal }}
+                {{ convertedResult?.units?.force }}
+              </p>
+              <p>
+                Vertical: {{ supportReaction.reactions.vertical }}
+                {{ convertedResult?.units?.force }}
+              </p>
+              <p>
+                Moment: {{ supportReaction.reactions.moment }}
+                {{ convertedResult?.units?.moment }}
+              </p>
             </div>
           </div>
         }
