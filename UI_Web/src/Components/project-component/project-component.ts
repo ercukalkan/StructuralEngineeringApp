@@ -13,10 +13,16 @@ interface BeamSupport {
   };
 }
 
+interface BeamPointLoad {
+  magnitude: number;
+  location: number;
+}
+
 interface BeamFormValues {
   length: number;
   elements: number;
   uniformLoad: number;
+  pointLoads: BeamPointLoad[];
   supports: BeamSupport[];
 }
 
@@ -38,6 +44,7 @@ export class ProjectComponent {
     length: 8,
     elements: 20,
     uniformLoad: -20,
+    pointLoads: [],
     supports: [
       { location: 0, degreesOfFreedom: { N: true, V: true, M: false } },
       { location: 8, degreesOfFreedom: { N: false, V: true, M: false } },
@@ -58,11 +65,36 @@ export class ProjectComponent {
     this.form.supports = this.form.supports.filter((_, supportIndex) => supportIndex !== index);
   }
 
+  addPointLoad(): void {
+    this.form.pointLoads = [
+      ...this.form.pointLoads,
+      { magnitude: -20, location: Number(this.form.length) / 2 },
+    ];
+  }
+
+  removePointLoad(index: number): void {
+    this.form.pointLoads = this.form.pointLoads.filter((_, loadIndex) => loadIndex !== index);
+  }
+
+  get hasInvalidSupportLocation(): boolean {
+    const length = Number(this.form.length);
+
+    return (
+      !Number.isFinite(length) ||
+      this.form.supports.some((support) => Number(support.location) > length) ||
+      this.form.pointLoads.some((pointLoad) => Number(pointLoad.location) > length)
+    );
+  }
+
   get analysisRequest(): AnalysisRequest {
     return {
       length: Number(this.form.length),
       elements: Number(this.form.elements),
       uniformLoad: Number(this.form.uniformLoad),
+      pointLoads: this.form.pointLoads.map((pointLoad) => ({
+        magnitude: Number(pointLoad.magnitude),
+        location: Number(pointLoad.location),
+      })),
       supports: this.form.supports.map((support) => ({
         location: Number(support.location),
         degreesOfFreedom: {
@@ -90,6 +122,11 @@ export class ProjectComponent {
   }
 
   runCalculation(): void {
+    if (this.hasInvalidSupportLocation) {
+      this.errorMessage = 'Support and point-load locations must be within the beam length.';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     this.result = null;

@@ -9,7 +9,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
 
-def main(length=8.0, elements=20, distributed_load=-20.0e3, supports=None):
+def main(
+    length=8.0,
+    elements=20,
+    distributed_load=-20.0e3,
+    point_loads=None,
+    supports=None,
+):
     # Beam properties (consistent SI units: m, N, Pa)
     elastic_modulus = 210.0e9
     area = 0.012
@@ -17,6 +23,7 @@ def main(length=8.0, elements=20, distributed_load=-20.0e3, supports=None):
     length = float(length)
     distributed_load = float(distributed_load)
     elements = int(elements)
+    point_loads = point_loads or []
     supports = supports or []
 
     ops.wipe()
@@ -72,6 +79,17 @@ def main(length=8.0, elements=20, distributed_load=-20.0e3, supports=None):
     ops.pattern("Plain", 1, 1)
     for element_tag in range(1, elements + 1):
         ops.eleLoad("-ele", element_tag, "-type", "-beamUniform", distributed_load)
+
+    for point_load in point_loads:
+        if not isinstance(point_load, dict):
+            continue
+
+        location = float(point_load.get("location", 0.0))
+        magnitude = float(point_load.get("magnitude", 0.0))
+        x_position = max(0.0, min(location, length))
+        node_tag = int(round((x_position / length) * elements)) + 1 if length > 0 else 1
+        node_tag = max(1, min(node_tag, elements + 1))
+        ops.load(node_tag, 0.0, magnitude, 0.0)
 
     ops.system("BandGeneral")
     ops.numberer("RCM")

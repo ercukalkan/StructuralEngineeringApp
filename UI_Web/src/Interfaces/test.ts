@@ -2,6 +2,10 @@ export interface AnalysisRequest {
   length: number;
   elements: number;
   uniformLoad: number;
+  pointLoads?: Array<{
+    magnitude: number;
+    location: number;
+  }>;
   supports?: Array<{
     location: number;
     degreesOfFreedom: {

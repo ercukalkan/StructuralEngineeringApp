@@ -14,7 +14,7 @@
         type="button"
         class="inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
         (click)="runCalculation()"
-        [disabled]="isLoading"
+        [disabled]="isLoading || hasInvalidSupportLocation"
       >
         {{ isLoading ? 'Running...' : 'Run' }}
       </button>
@@ -59,6 +59,71 @@
 
     <div class="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
+        <h3 class="text-base font-semibold text-white">Point loads</h3>
+        <button
+          type="button"
+          class="rounded-xl border border-blue-400/60 bg-blue-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-blue-100 transition hover:bg-blue-500/20"
+          (click)="addPointLoad()"
+        >
+          Add point load
+        </button>
+      </div>
+
+      @for (pointLoad of form.pointLoads; track pointLoad; let i = $index) {
+        <div class="mt-3 rounded-xl border border-slate-700/80 bg-slate-900/60 p-3">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div class="grid flex-1 gap-3 sm:grid-cols-2">
+              <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+                <span>Load magnitude</span>
+                <input
+                  type="number"
+                  [(ngModel)]="pointLoad.magnitude"
+                  step="0.1"
+                  placeholder="-20"
+                  class="rounded-xl border border-slate-600 bg-slate-900/70 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+              </label>
+
+              <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
+                <span>Load location</span>
+                <input
+                  type="number"
+                  [(ngModel)]="pointLoad.location"
+                  #pointLoadLocation="ngModel"
+                  step="0.1"
+                  min="0"
+                  [max]="form.length"
+                  [class.border-red-500]="pointLoadLocation.invalid && pointLoadLocation.touched"
+                  [class.focus:border-red-500]="
+                    pointLoadLocation.invalid && pointLoadLocation.touched
+                  "
+                  [class.focus:ring-red-500/30]="
+                    pointLoadLocation.invalid && pointLoadLocation.touched
+                  "
+                  class="rounded-xl border border-slate-600 bg-slate-900/70 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+                @if (pointLoadLocation.errors?.['max'] && pointLoadLocation.touched) {
+                  <span class="text-xs font-medium text-red-300">
+                    Load location cannot exceed {{ form.length }} m.
+                  </span>
+                }
+              </label>
+            </div>
+
+            <button
+              type="button"
+              class="rounded-xl border border-red-500/60 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-100 transition hover:bg-red-500/20"
+              (click)="removePointLoad(i)"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4">
+      <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="text-base font-semibold text-white">Supports</h3>
         <button
           type="button"
@@ -78,11 +143,20 @@
                 <input
                   type="number"
                   [(ngModel)]="support.location"
+                  #supportLocation="ngModel"
                   step="0.1"
                   min="0"
                   [max]="form.length"
+                  [class.border-red-500]="supportLocation.invalid && supportLocation.touched"
+                  [class.focus:border-red-500]="supportLocation.invalid && supportLocation.touched"
+                  [class.focus:ring-red-500/30]="supportLocation.invalid && supportLocation.touched"
                   class="rounded-xl border border-slate-600 bg-slate-900/70 px-3 py-2.5 text-base text-white placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
+                @if (supportLocation.errors?.['max'] && supportLocation.touched) {
+                  <span class="text-xs font-medium text-red-300">
+                    Support location cannot exceed {{ form.length }} m.
+                  </span>
+                }
               </label>
 
               <div class="flex flex-wrap items-center gap-3 text-sm text-slate-200">
