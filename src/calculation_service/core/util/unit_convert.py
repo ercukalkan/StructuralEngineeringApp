@@ -11,11 +11,12 @@ length_conversion_factors = {
     "mm": 1e3,
 }
 
-def conversion_factor(input_unit_force, input_unit_length):
-    force_conversion = force_conversion_factors.get(input_unit_force)
-    length_conversion = length_conversion_factors.get(input_unit_length)
-
-    return force_conversion, length_conversion
+def conversion_factor(unitPair):
+    input_unit_force, input_unit_length = unitPair
+    force_conversion_factor = force_conversion_factors.get(input_unit_force)
+    length_conversion_factor = length_conversion_factors.get(input_unit_length)
+    
+    return force_conversion_factor, length_conversion_factor
 
 def value_convert(value, conversion_factor):
     return value * conversion_factor

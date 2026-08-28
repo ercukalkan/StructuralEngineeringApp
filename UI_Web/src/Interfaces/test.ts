@@ -14,6 +14,7 @@ export interface AnalysisRequest {
       M: boolean;
     };
   }>;
+  inputUnits: [force: string, length: string];
 }
 
 export interface SupportReactionEntry {

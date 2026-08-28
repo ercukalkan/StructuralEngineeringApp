@@ -89,10 +89,7 @@ export class ProjectComponent {
     elements: 20,
     uniformLoad: -20,
     pointLoads: [],
-    supports: [
-      { location: 0, degreesOfFreedom: { N: true, V: true, M: false } },
-      { location: 8, degreesOfFreedom: { N: false, V: true, M: false } },
-    ],
+    supports: [{ location: 0, degreesOfFreedom: { N: true, V: true, M: false } }],
     inputUnits: this.inputUnitOptions[1],
   };
 
@@ -148,6 +145,7 @@ export class ProjectComponent {
           M: Boolean(support.degreesOfFreedom.M),
         },
       })),
+      inputUnits: this.form.inputUnits,
     };
   }
 
