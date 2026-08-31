@@ -12,9 +12,8 @@ import openseespy.opensees as ops
 from calculation_service.core.util import *
 from calculation_service.core.util.analysis_request import AnalysisRequest
 
-
 def main(request: AnalysisRequest):
-    # Beam properties (consistent SI units: m, N, Pa)
+    #region Beam properties
     elastic_modulus = 210.0e9
     area = 0.012
     inertia = 8.0e-5
@@ -24,7 +23,9 @@ def main(request: AnalysisRequest):
     point_loads = request.point_loads or []
     supports = request.supports or []
     input_units = request.input_units or ("N", "m")
+    #endregion
 
+    #region Unit Conversion
     force_factor, length_factor = conversion_factor(input_units)
     length *= length_factor
     elastic_modulus *= force_factor / (length_factor ** 2)
@@ -34,13 +35,19 @@ def main(request: AnalysisRequest):
     for point_load in point_loads:
         magnitude = float(point_load.get("magnitude", 0.0))
         point_load["magnitude"] = magnitude * force_factor / length_factor
+    #endregion
 
+    #region OpenSees Model Definition
     ops.wipe()
     ops.model("basic", "-ndm", 2, "-ndf", 3)
+    #endregion
 
+    #region Node Definition
     for node_tag in range(elements + 1):
         ops.node(node_tag + 1, length * node_tag / elements, 0.0)
+    #endregion
 
+    #region Support Definition
     if supports:
         support_map = {}
         for support in supports:
@@ -70,8 +77,13 @@ def main(request: AnalysisRequest):
     else:
         ops.fix(1, 1, 1, 1)
         ops.fix(elements + 1, 1, 1, 1)
+    #endregion
 
+    #region Geometric Transformation
     ops.geomTransf("Linear", 1)
+    #endregion
+
+    #region Element Definition
     for element_tag in range(1, elements + 1):
         ops.element(
             "elasticBeamColumn",
@@ -83,9 +95,14 @@ def main(request: AnalysisRequest):
             inertia,
             1,
         )
+    #endregion
 
+    #region Time Series and Pattern
     ops.timeSeries("Linear", 1)
     ops.pattern("Plain", 1, 1)
+    #endregion
+
+    #region Load Definition
     for element_tag in range(1, elements + 1):
         ops.eleLoad("-ele", element_tag, "-type", "-beamUniform", distributed_load)
 
@@ -99,7 +116,9 @@ def main(request: AnalysisRequest):
         node_tag = int(round((x_position / length) * elements)) + 1 if length > 0 else 1
         node_tag = max(1, min(node_tag, elements + 1))
         ops.load(node_tag, 0.0, magnitude, 0.0)
+    #endregion
 
+    #region Analysis Setup
     ops.system("BandGeneral")
     ops.numberer("RCM")
     ops.constraints("Plain")
@@ -109,21 +128,26 @@ def main(request: AnalysisRequest):
     if ops.analyze(1) != 0:
         raise RuntimeError("OpenSees analysis failed")
     ops.reactions()
+    #endregion
 
+    #region Result Arrays Initialization
     x = np.linspace(0.0, length, elements + 1)
     axial = np.zeros(elements + 1)
     shear = np.zeros(elements + 1)
     moment = np.zeros(elements + 1)
+    #endregion
 
-    # eleForce gives [N_i, V_i, M_i, N_j, V_j, M_j] in local coordinates.
+    #region Element Forces in Local Coordinates (N_i, V_i, M_i, N_j, V_j, M_j)
     for element_tag in range(1, elements + 1):
-        force = ops.eleForce(element_tag) # *********************************
+        force = ops.eleForce(element_tag)
         if element_tag == 1:
             axial[0], shear[0], moment[0] = force[:3]
         axial[element_tag] = -force[3]
         shear[element_tag] = -force[4]
         moment[element_tag] = -force[5]
+    #endregion
 
+    #region Support Reactions
     support_reactions = []
     if supports:
         for node_tag, info in support_map.items():
@@ -132,8 +156,8 @@ def main(request: AnalysisRequest):
                 {
                     "location": round(float(info["location"]), 2),
                     "reactions": {
-                        "horizontal": round(float(reactions[0]), 2),
-                        "vertical": round(float(reactions[1]), 2),
+                        "axial": round(float(reactions[0]), 2),
+                        "shear": round(float(reactions[1]), 2),
                         "moment": round(float(reactions[2]), 2),
                     },
                 }
@@ -145,21 +169,23 @@ def main(request: AnalysisRequest):
             {
                 "location": 0.0,
                 "reactions": {
-                    "horizontal": round(float(left_reactions[0]), 2),
-                    "vertical": round(float(left_reactions[1]), 2),
+                    "axial": round(float(left_reactions[0]), 2),
+                    "shear": round(float(left_reactions[1]), 2),
                     "moment": round(float(left_reactions[2]), 2),
                 },
             },
             {
                 "location": round(float(length), 2),
                 "reactions": {
-                    "horizontal": round(float(right_reactions[0]), 2),
-                    "vertical": round(float(right_reactions[1]), 2),
+                    "axial": round(float(right_reactions[0]), 2),
+                    "shear": round(float(right_reactions[1]), 2),
                     "moment": round(float(right_reactions[2]), 2),
                 },
             },
         ]
+    #endregion
 
+    #region Plot Internal Force Diagrams
     fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 8), constrained_layout=True)
     diagrams = (
         (axial / 1e3, "Axial force N (kN)", "tab:blue"),
@@ -175,26 +201,34 @@ def main(request: AnalysisRequest):
 
     axes[-1].set_xlabel("Beam coordinate x (m)")
     fig.suptitle("Simply Supported Beam: Internal Force Diagrams")
+    #endregion
 
+    #region Save Plot to Data URL
     plot_buffer = BytesIO()
     fig.savefig(plot_buffer, format="png", dpi=150)
     plot_data_url = "data:image/png;base64," + base64.b64encode(
         plot_buffer.getvalue()
     ).decode("ascii")
     plt.close(fig)
+    #endregion
 
+    #region Points Along the Beam
     points = [
         {
-            "x": float(position),
-            "axial": round(float(axial_value), 2),
-            "shear": round(float(shear_value), 2),
-            "moment": round(float(moment_value), 2),
+            "location": float(position),
+            "internalForces": {
+                "axial": round(float(axial_value), 2),
+                "shear": round(float(shear_value), 2),
+                "moment": round(float(moment_value), 2),
+            }
         }
         for position, axial_value, shear_value, moment_value in zip(
             x, axial, shear, moment
         )
     ]
+    #endregion
 
+    #region Return Result Dictionary
     return {
         "units": {
             "length": "m", 
@@ -214,6 +248,7 @@ def main(request: AnalysisRequest):
         "supportReactions": support_reactions,
         "plot": {"format": "png", "dataUrl": plot_data_url},
     }
+    #endregion
 
 
 if __name__ == "__main__":

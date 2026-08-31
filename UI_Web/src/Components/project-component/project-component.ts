@@ -1,33 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { TestService } from '../../Services/test';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import type { UnitPair } from '../../Types/UnitPair';
 import { FormsModule } from '@angular/forms';
-import { AnalysisRequest, AnalysisResponse, SupportReactionEntry } from '../../Interfaces/test';
-
-interface BeamSupport {
-  location: number;
-  degreesOfFreedom: {
-    N: boolean;
-    V: boolean;
-    M: boolean;
-  };
-}
-
-interface BeamPointLoad {
-  magnitude: number;
-  location: number;
-}
-
-interface BeamFormValues {
-  length: number;
-  elements: number;
-  uniformLoad: number;
-  pointLoads: BeamPointLoad[];
-  supports: BeamSupport[];
-  inputUnits: UnitPair;
-}
-
-type UnitPair = [force: string, length: string];
+import AnalysisResponse2D from '../../Interfaces/AnalysisResponse2D';
+import AnalysisRequest2D from '../../Interfaces/AnalysisRequest2D';
+import SupportReaction from '../../Interfaces/SupportReaction';
 
 @Component({
   selector: 'app-project-component',
@@ -80,41 +58,47 @@ export class ProjectComponent {
 
   isLoading = false;
   errorMessage = '';
-  result: AnalysisResponse | null = null;
-  convertedResult: AnalysisResponse | null = null;
+  result: AnalysisResponse2D | null = null;
+  convertedResult: AnalysisResponse2D | null = null;
   outputUnits: UnitPair = this.outputUnitOptions[1];
 
-  form: BeamFormValues = {
+  form: AnalysisRequest2D = {
     length: 8,
     elements: 20,
     uniformLoad: -20,
-    pointLoads: [],
-    supports: [{ location: 0, degreesOfFreedom: { N: true, V: true, M: false } }],
-    inputUnits: this.inputUnitOptions[1],
+    pointLoads: null,
+    supports: [{ location: 0, degreesOfFreedom: { N: true, V: true, M: true } }],
+    inputUnits: this.inputUnitOptions[0],
   };
 
   addSupport(): void {
     this.form.supports = [
-      ...this.form.supports,
+      ...(this.form.supports ?? []),
       {
-        location: Number(this.form.length) / 2,
+        location: 0,
         degreesOfFreedom: { N: false, V: true, M: false },
       },
     ];
   }
 
   removeSupport(index: number): void {
+    if (!this.form.supports) {
+      return;
+    }
     this.form.supports = this.form.supports.filter((_, supportIndex) => supportIndex !== index);
   }
 
   addPointLoad(): void {
     this.form.pointLoads = [
-      ...this.form.pointLoads,
+      ...(this.form.pointLoads ?? []),
       { magnitude: -20, location: Number(this.form.length) / 2 },
     ];
   }
 
   removePointLoad(index: number): void {
+    if (!this.form.pointLoads) {
+      return;
+    }
     this.form.pointLoads = this.form.pointLoads.filter((_, loadIndex) => loadIndex !== index);
   }
 
@@ -123,21 +107,21 @@ export class ProjectComponent {
 
     return (
       !Number.isFinite(length) ||
-      this.form.supports.some((support) => Number(support.location) > length) ||
-      this.form.pointLoads.some((pointLoad) => Number(pointLoad.location) > length)
+      (this.form.supports?.some((support) => Number(support.location) > length) ?? false) ||
+      (this.form.pointLoads?.some((pointLoad) => Number(pointLoad.location) > length) ?? false)
     );
   }
 
-  get analysisRequest(): AnalysisRequest {
+  get analysisRequest(): AnalysisRequest2D {
     return {
       length: Number(this.form.length),
       elements: Number(this.form.elements),
       uniformLoad: Number(this.form.uniformLoad),
-      pointLoads: this.form.pointLoads.map((pointLoad) => ({
+      pointLoads: (this.form.pointLoads ?? []).map((pointLoad) => ({
         magnitude: Number(pointLoad.magnitude),
         location: Number(pointLoad.location),
       })),
-      supports: this.form.supports.map((support) => ({
+      supports: (this.form.supports ?? []).map((support) => ({
         location: Number(support.location),
         degreesOfFreedom: {
           N: Boolean(support.degreesOfFreedom.N),
@@ -149,7 +133,7 @@ export class ProjectComponent {
     };
   }
 
-  get supportReactionRows(): SupportReactionEntry[] {
+  get supportReactionRows(): SupportReaction[] {
     if (!this.convertedResult?.supportReactions) {
       return [];
     }
@@ -158,13 +142,7 @@ export class ProjectComponent {
       return this.convertedResult.supportReactions;
     }
 
-    return [
-      { location: 0, reactions: this.convertedResult.supportReactions.left },
-      {
-        location: Number(this.convertedResult.beam.length),
-        reactions: this.convertedResult.supportReactions.right,
-      },
-    ];
+    return [];
   }
 
   convertResultUnits(): void {
@@ -173,64 +151,64 @@ export class ProjectComponent {
     }
 
     const [forceUnit, lengthUnit] = this.outputUnits;
-    const forceFactor = this.forceConversionFactors[forceUnit];
-    const lengthFactor = this.lengthConversionFactors[lengthUnit];
+
+    const forceFactor = this.forceConversionFactors[forceUnit]; // Get the conversion factor for the selected force unit
+    const lengthFactor = this.lengthConversionFactors[lengthUnit]; // Get the conversion factor for the selected length unit
 
     if (forceFactor === undefined || lengthFactor === undefined) {
+      // Check if conversion factors are defined
       this.errorMessage = 'The selected output units are not supported.';
       return;
     }
 
+    // Conversion functions for force, length, and moment values
     const convertForce = (value: number): number => value * forceFactor;
     const convertLength = (value: number): number => value * lengthFactor;
     const convertMoment = (value: number): number => value * forceFactor * lengthFactor;
 
+    // Convert support reactions, beam, and points using the conversion functions
     const supportReactions = Array.isArray(this.result.supportReactions)
       ? this.result.supportReactions.map((supportReaction) => ({
           location: convertLength(supportReaction.location),
           reactions: {
-            horizontal: convertForce(supportReaction.reactions.horizontal),
-            vertical: convertForce(supportReaction.reactions.vertical),
+            axial: convertForce(supportReaction.reactions.axial),
+            shear: convertForce(supportReaction.reactions.shear),
             moment: convertMoment(supportReaction.reactions.moment),
           },
         }))
-      : {
-          left: {
-            horizontal: convertForce(this.result.supportReactions.left.horizontal),
-            vertical: convertForce(this.result.supportReactions.left.vertical),
-            moment: convertMoment(this.result.supportReactions.left.moment),
-          },
-          right: {
-            horizontal: convertForce(this.result.supportReactions.right.horizontal),
-            vertical: convertForce(this.result.supportReactions.right.vertical),
-            moment: convertMoment(this.result.supportReactions.right.moment),
-          },
-        };
+      : [];
+
+    const units = {
+      length: lengthUnit,
+      force: forceUnit,
+      moment: `${forceUnit} ${lengthUnit}`,
+    };
+
+    const beam = {
+      ...this.result.beam,
+      length: convertLength(this.result.beam.length),
+      distributedLoad: {
+        ...this.result.beam.distributedLoad,
+        magnitude: convertForce(this.result.beam.distributedLoad.magnitude) / lengthFactor,
+        startPosition: convertLength(this.result.beam.distributedLoad.startPosition),
+        endPosition: convertLength(this.result.beam.distributedLoad.endPosition),
+      },
+    };
+
+    const points =
+      this.result.points?.map((point) => ({
+        ...point,
+        x: convertLength(point.location),
+        axial: convertForce(point.internalForces.axial),
+        shear: convertForce(point.internalForces.shear),
+        moment: convertMoment(point.internalForces.moment),
+      })) ?? [];
 
     this.convertedResult = {
       ...this.result,
-      units: {
-        length: lengthUnit,
-        force: forceUnit,
-        moment: `${forceUnit} ${lengthUnit}`,
-      },
-      beam: {
-        ...this.result.beam,
-        length: convertLength(this.result.beam.length),
-        distributedLoad: {
-          ...this.result.beam.distributedLoad,
-          magnitude: convertForce(this.result.beam.distributedLoad.magnitude) / lengthFactor,
-          startPosition: convertLength(this.result.beam.distributedLoad.startPosition),
-          endPosition: convertLength(this.result.beam.distributedLoad.endPosition),
-        },
-      },
-      points: this.result.points?.map((point) => ({
-        ...point,
-        x: convertLength(point.x),
-        axial: convertForce(point.axial),
-        shear: convertForce(point.shear),
-        moment: convertMoment(point.moment),
-      })),
+      units,
+      beam,
+      points,
       supportReactions,
     };
   }
@@ -245,7 +223,7 @@ export class ProjectComponent {
     this.errorMessage = '';
     this.result = null;
 
-    this.test.post<AnalysisResponse>({ ...this.analysisRequest }).subscribe({
+    this.test.post(this.analysisRequest).subscribe({
       next: (response) => {
         this.result = response;
         this.convertedResult = response;

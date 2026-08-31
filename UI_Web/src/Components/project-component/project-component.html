@@ -2,6 +2,7 @@
   <section
     class="mx-auto w-full max-w-6xl rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20"
   >
+    <!-- #region Header -->
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p class="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">
@@ -19,7 +20,9 @@
         {{ isLoading ? 'Running...' : 'Run' }}
       </button>
     </div>
+    <!-- #endregion Header -->
 
+    <!-- #region Beam Properties -->
     <div class="grid gap-4 md:grid-cols-4">
       <label class="flex flex-col gap-2 text-sm font-medium text-slate-200">
         <span>Length</span>
@@ -70,7 +73,9 @@
         </select>
       </label>
     </div>
+    <!-- #endregion Beam Properties -->
 
+    <!-- #region Point Loads -->
     <div class="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="text-base font-semibold text-white">Point loads</h3>
@@ -135,7 +140,9 @@
         </div>
       }
     </div>
+    <!-- #endregion Point Loads -->
 
+    <!-- #region Supports -->
     <div class="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="text-base font-semibold text-white">Supports</h3>
@@ -220,8 +227,10 @@
         </div>
       }
     </div>
+    <!-- #endregion Supports -->
   </section>
 
+  <!-- #region Calculation Placeholder -->
   <div class="mx-auto max-w-6xl">
     @if (isLoading) {
       <section
@@ -239,11 +248,13 @@
       </section>
     }
   </div>
+  <!-- #endregion Calculation Placeholder -->
 
   @if (result) {
     <section
       class="mx-auto mt-4 max-w-6xl rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20"
     >
+      <!-- #region Summary Cards -->
       <div class="mb-5 flex items-center justify-between gap-3">
         <h3 class="text-xl font-bold text-white">Calculation results</h3>
         <span
@@ -252,7 +263,9 @@
           Complete
         </span>
       </div>
+      <!-- #endregion Summary Cards -->
 
+      <!-- #region Beam Summary -->
       <div class="mb-5 grid gap-4 md:grid-cols-4">
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
           <span class="block text-xs uppercase tracking-wide text-slate-400">Length</span>
@@ -263,7 +276,9 @@
           <strong class="mt-2 block text-lg text-white">{{ result.beam.elements }}</strong>
         </div>
         <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
-          <span class="block text-xs uppercase tracking-wide text-slate-400">UDL</span>
+          <span class="block text-xs uppercase tracking-wide text-slate-400"
+            >Uniform Distributed Load</span
+          >
           <strong class="mt-2 block text-lg text-white"
             >{{ convertedResult?.beam?.distributedLoad?.magnitude }}
           </strong>
@@ -283,20 +298,25 @@
           </select>
         </div>
       </div>
+      <!-- #endregion Beam Summary -->
 
+      <!-- #region Support Reactions -->
       <div class="space-y-4">
-        @for (supportReaction of supportReactionRows; track supportReaction.location) {
+        @for (
+          supportReaction of convertedResult?.supportReactions;
+          track supportReaction.location
+        ) {
           <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
             <h4 class="mb-3 text-base font-semibold text-white">
               Support at {{ supportReaction.location }} {{ convertedResult?.units?.length }}
             </h4>
             <div class="grid grid-cols-3 gap-3 text-sm text-slate-300">
               <p>
-                Horizontal: {{ supportReaction.reactions.horizontal }}
+                Axial: {{ supportReaction.reactions.axial }}
                 {{ convertedResult?.units?.force }}
               </p>
               <p>
-                Vertical: {{ supportReaction.reactions.vertical }}
+                Shear: {{ supportReaction.reactions.shear }}
                 {{ convertedResult?.units?.force }}
               </p>
               <p>
@@ -307,7 +327,9 @@
           </div>
         }
       </div>
+      <!-- #endregion Support Reactions -->
 
+      <!-- #region Force Diagram -->
       @if (result.plot.dataUrl) {
         <div class="overflow-hidden mt-4 rounded-2xl border border-slate-700/80 bg-white">
           <img
@@ -317,6 +339,7 @@
           />
         </div>
       }
+      <!-- #endregion Force Diagram -->
     </section>
   }
 </div>
