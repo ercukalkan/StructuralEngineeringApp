@@ -2,10 +2,12 @@ import { CommonModule } from '@angular/common';
 import { TestService } from '../../Services/test';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import type { UnitPair } from '../../Types/UnitPair';
+import { inputUnitPairs, outputUnitPairs } from '../../Types/UnitPair';
 import { FormsModule } from '@angular/forms';
 import AnalysisResponse2D from '../../Interfaces/AnalysisResponse2D';
 import AnalysisRequest2D from '../../Interfaces/AnalysisRequest2D';
 import SupportReaction from '../../Interfaces/SupportReaction';
+import { UnitConverter as UC } from '../../util/UnitConverter';
 
 @Component({
   selector: 'app-project-component',
@@ -17,44 +19,8 @@ export class ProjectComponent {
   private readonly test = inject(TestService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  private readonly forceConversionFactors: Record<string, number> = {
-    N: 1,
-    kN: 1e-3,
-    lb: 0.2248089431,
-    tonf: 1.019716213e-4,
-  };
-
-  private readonly lengthConversionFactors: Record<string, number> = {
-    m: 1,
-    cm: 100,
-    mm: 1000,
-    ft: 3.280839895,
-    in: 39.37007874,
-  };
-
-  readonly inputUnitOptions: UnitPair[] = [
-    ['kN', 'm'],
-    ['N', 'm'],
-    ['kN', 'cm'],
-    ['N', 'cm'],
-    ['kN', 'mm'],
-    ['N', 'mm'],
-    ['lb', 'ft'],
-    ['lb', 'in'],
-    ['tonf', 'm'],
-  ];
-
-  readonly outputUnitOptions: UnitPair[] = [
-    ['kN', 'm'],
-    ['N', 'm'],
-    ['kN', 'cm'],
-    ['N', 'cm'],
-    ['kN', 'mm'],
-    ['N', 'mm'],
-    ['lb', 'ft'],
-    ['lb', 'in'],
-    ['tonf', 'm'],
-  ];
+  readonly inputUnitOptions: UnitPair[] = inputUnitPairs;
+  readonly outputUnitOptions: UnitPair[] = outputUnitPairs;
 
   isLoading = false;
   errorMessage = '';
@@ -152,28 +118,14 @@ export class ProjectComponent {
 
     const [forceUnit, lengthUnit] = this.outputUnits;
 
-    const forceFactor = this.forceConversionFactors[forceUnit]; // Get the conversion factor for the selected force unit
-    const lengthFactor = this.lengthConversionFactors[lengthUnit]; // Get the conversion factor for the selected length unit
-
-    if (forceFactor === undefined || lengthFactor === undefined) {
-      // Check if conversion factors are defined
-      this.errorMessage = 'The selected output units are not supported.';
-      return;
-    }
-
-    // Conversion functions for force, length, and moment values
-    const convertForce = (value: number): number => value * forceFactor;
-    const convertLength = (value: number): number => value * lengthFactor;
-    const convertMoment = (value: number): number => value * forceFactor * lengthFactor;
-
     // Convert support reactions, beam, and points using the conversion functions
     const supportReactions = Array.isArray(this.result.supportReactions)
       ? this.result.supportReactions.map((supportReaction) => ({
-          location: convertLength(supportReaction.location),
+          location: UC.ConvertLength(supportReaction.location, lengthUnit),
           reactions: {
-            axial: convertForce(supportReaction.reactions.axial),
-            shear: convertForce(supportReaction.reactions.shear),
-            moment: convertMoment(supportReaction.reactions.moment),
+            axial: UC.ConvertForce(supportReaction.reactions.axial, forceUnit),
+            shear: UC.ConvertForce(supportReaction.reactions.shear, forceUnit),
+            moment: UC.ConvertMoment(supportReaction.reactions.moment, this.outputUnits),
           },
         }))
       : [];
@@ -186,22 +138,24 @@ export class ProjectComponent {
 
     const beam = {
       ...this.result.beam,
-      length: convertLength(this.result.beam.length),
+      length: UC.ConvertLength(this.result.beam.length, lengthUnit),
       distributedLoad: {
         ...this.result.beam.distributedLoad,
-        magnitude: convertForce(this.result.beam.distributedLoad.magnitude) / lengthFactor,
-        startPosition: convertLength(this.result.beam.distributedLoad.startPosition),
-        endPosition: convertLength(this.result.beam.distributedLoad.endPosition),
+        magnitude:
+          UC.ConvertForce(this.result.beam.distributedLoad.magnitude, forceUnit) /
+          UC.ConvertLength(1, lengthUnit),
+        startPosition: UC.ConvertLength(this.result.beam.distributedLoad.startPosition, lengthUnit),
+        endPosition: UC.ConvertLength(this.result.beam.distributedLoad.endPosition, lengthUnit),
       },
     };
 
     const points =
       this.result.points?.map((point) => ({
         ...point,
-        x: convertLength(point.location),
-        axial: convertForce(point.internalForces.axial),
-        shear: convertForce(point.internalForces.shear),
-        moment: convertMoment(point.internalForces.moment),
+        x: UC.ConvertLength(point.location, lengthUnit),
+        axial: UC.ConvertForce(point.internalForces.axial, forceUnit),
+        shear: UC.ConvertForce(point.internalForces.shear, forceUnit),
+        moment: UC.ConvertMoment(point.internalForces.moment, this.outputUnits),
       })) ?? [];
 
     this.convertedResult = {
