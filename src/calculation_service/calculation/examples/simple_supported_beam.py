@@ -33,7 +33,7 @@ def main(request: AnalysisRequest):
     #endregion
 
     #region Support Definition
-    support_map = ops_helper.ops_define_supports(supports, elements, length)
+    ops_helper.ops_define_supports(supports, elements, length)
     #endregion
 
     #region Geometric Transformation
@@ -66,19 +66,19 @@ def main(request: AnalysisRequest):
     #endregion
 
     #region Support Reactions
-    support_reactions = ops_helper.ops_support_reactions(supports, support_map)
+    support_reactions = ops_helper.ops_support_reactions(supports, length, elements)
     #endregion
 
     #region Plot Internal Force Diagrams
-    fig = ops_helper.plot_internal_forces(x, [axial, shear, moment])
+    fig = ops_helper.ops_plot_internal_forces(x, [axial, shear, moment])
     #endregion
 
     #region Save Plot to Data URL
-    plot_data_url = ops_helper.save_plot_to_data_url(fig)
+    plot_data_url = ops_helper.ops_save_plot_to_data_url(fig)
     #endregion
 
     #region Internal Forces At Points Along the Beam
-    points = ops_helper.internal_forces_at_points(x, [axial, shear, moment])
+    points = ops_helper.ops_internal_forces_at_points(x, [axial, shear, moment])
     #endregion
 
     #region Return Result Dictionary

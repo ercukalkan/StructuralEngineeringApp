@@ -18,36 +18,19 @@ def ops_define_nodes(number_of_elements, length):
 
 def ops_define_supports(supports, number_of_elements, length):
     if supports:
-        support_map = {}
         for support in supports:
             if not isinstance(support, dict):
                 continue
+            sup_location = support.get("location", 0.0)
+            sup_dofs = support.get("degreesOfFreedom") or {}
 
-            location = float(support.get("location", 0.0))
-            dofs = support.get("degreesOfFreedom", {}) or {}
-            if not isinstance(dofs, dict):
-                dofs = {}
+            sup_node_tag = int(round(((sup_location / length) * number_of_elements))) + 1
+            dofN, dofV, dofM = sup_dofs.values()
 
-            x_position = max(0.0, min(float(location), length))
-            node_tag = int(round((x_position / length) * number_of_elements)) + 1 if length > 0 else 1
-            node_tag = max(1, min(node_tag, number_of_elements + 1))
-
-            support_info = support_map.setdefault(
-                node_tag,
-                {"location": x_position, "fixity": [0, 0, 0]},
-            )
-            current_fix = support_info["fixity"]
-            current_fix[0] = current_fix[0] or int(bool(dofs.get("N", False)))
-            current_fix[1] = current_fix[1] or int(bool(dofs.get("V", False)))
-            current_fix[2] = current_fix[2] or int(bool(dofs.get("M", False)))
-
-        for node_tag, support_info in support_map.items():
-            ops.fix(node_tag, *support_info["fixity"])
+            ops.fix(int(round(sup_node_tag)), int(dofN), int(dofV), int(dofM))
     else:
         ops.fix(1, 1, 1, 1)
-        ops.fix(number_of_elements + 1, 1, 1, 1)
-
-    return support_map
+        ops.fix(number_of_elements + 1, 1, 1 ,1)
 
 
 def ops_geomTrans_Linear():
@@ -109,28 +92,32 @@ def ops_element_forces(length, number_of_elements):
             forces[:, 0] = element_forces[:3]
         forces[:, element_tag] = [-i for i in element_forces[3:6]]
     return x, forces
-        
 
-def ops_support_reactions(supports, support_map):
+def ops_support_reactions(supports, length, number_of_elements):
     support_reactions = []
     if supports:
-        for node_tag, info in support_map.items():
-            reactions = ops.nodeReaction(node_tag)
+        for support in supports:
+            if not isinstance(support, dict):
+                continue
+            sup_location = support.get("location", 0.0)
+            sup_node_tag = int(round(((sup_location / length) * number_of_elements))) + 1
+            sup_reactions_N, sup_reactions_V, sup_reactions_M = ops.nodeReaction(sup_node_tag)
             support_reactions.append(
                 {
-                    "location": round(float(info["location"]), 2),
+                    "location": round(float(sup_location), 2),
                     "reactions": {
-                        "axial": round(float(reactions[0]), 2),
-                        "shear": round(float(reactions[1]), 2),
-                        "moment": round(float(reactions[2]), 2),
-                    },
+                        "axial": round(float(sup_reactions_N), 2),
+                        "shear": round(float(sup_reactions_V), 2),
+                        "moment": round(float(sup_reactions_M), 2)
+                    }
                 }
             )
+        return support_reactions
     else:
-        support_reactions = []
-    return support_reactions
+        return []
+        
 
-def plot_internal_forces(x, forces):
+def ops_plot_internal_forces(x, forces):
     fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 8), constrained_layout=True)
     diagrams = (
         (forces[0][:] / 1e3, "Axial force N (kN)", "tab:blue"),
@@ -148,7 +135,7 @@ def plot_internal_forces(x, forces):
     fig.suptitle("Simply Supported Beam: Internal Force Diagrams")
     return fig
 
-def save_plot_to_data_url(fig):
+def ops_save_plot_to_data_url(fig):
     plot_buffer = BytesIO()
     fig.savefig(plot_buffer, format="png", dpi=150)
     plot_data_url = "data:image/png;base64," + base64.b64encode(
@@ -157,7 +144,7 @@ def save_plot_to_data_url(fig):
     plt.close(fig)
     return plot_data_url
 
-def internal_forces_at_points(x, forces):
+def ops_internal_forces_at_points(x, forces):
     points = [
         {
             "location": float(position),
@@ -173,7 +160,7 @@ def internal_forces_at_points(x, forces):
     ]
     return points
 
-def result_dictionary(length, number_of_elements, distributed_load, points, support_reactions, plot_data_url):
+def ops_result_dictionary(length, number_of_elements, distributed_load, points, support_reactions, plot_data_url):
     return {
         "units": {
             "length": "m", 
