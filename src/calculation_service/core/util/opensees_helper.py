@@ -107,8 +107,8 @@ def ops_element_forces(length, number_of_elements):
         element_forces = ops.eleForce(element_tag)
         if element_tag == 1:
             forces[:, 0] = element_forces[:3]
-        forces[:, element_tag - 1] = element_forces[3:6]
-    return x, -forces
+        forces[:, element_tag] = [-i for i in element_forces[3:6]]
+    return x, forces
         
 
 def ops_support_reactions(supports, support_map):
