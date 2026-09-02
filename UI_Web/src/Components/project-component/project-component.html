@@ -302,10 +302,7 @@
 
       <!-- #region Support Reactions -->
       <div class="space-y-4">
-        @for (
-          supportReaction of convertedResult?.supportReactions;
-          track supportReaction.location
-        ) {
+        @for (supportReaction of supportReactionRows; track supportReaction.location) {
           <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
             <h4 class="mb-3 text-base font-semibold text-white">
               Support at {{ supportReaction.location }} {{ convertedResult?.units?.length }}

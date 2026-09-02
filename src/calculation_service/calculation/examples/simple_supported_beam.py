@@ -1,16 +1,9 @@
-"""Simply supported beam under a uniform load, analysed with OpenSeesPy."""
-
-import base64
-from io import BytesIO
-
-import matplotlib
-import numpy as np
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import openseespy.opensees as ops
+"""Beam analysis."""
 
 from calculation_service.core.util import *
 from calculation_service.core.util.analysis_request import AnalysisRequest
+import calculation_service.core.util.opensees_helper as ops_helper
+from calculation_service.core.util.unit_convert import Convert_All
 
 def main(request: AnalysisRequest):
     #region Beam properties
@@ -26,206 +19,66 @@ def main(request: AnalysisRequest):
     #endregion
 
     #region Unit Conversion
-    force_factor, length_factor = conversion_factor(input_units)
-    length *= length_factor
-    elastic_modulus *= force_factor / (length_factor ** 2)
-    area *= length_factor ** 2
-    inertia *= length_factor ** 4
-    distributed_load *= force_factor / length_factor
-    for point_load in point_loads:
-        magnitude = float(point_load.get("magnitude", 0.0))
-        point_load["magnitude"] = magnitude * force_factor / length_factor
+    length, elastic_modulus, area, inertia, distributed_load, point_loads = Convert_All(
+        length, elastic_modulus, area, inertia, distributed_load, point_loads, input_units
+    )
     #endregion
 
     #region OpenSees Model Definition
-    ops.wipe()
-    ops.model("basic", "-ndm", 2, "-ndf", 3)
+    ops_helper.ops_define_2d_model()
     #endregion
 
     #region Node Definition
-    for node_tag in range(elements + 1):
-        ops.node(node_tag + 1, length * node_tag / elements, 0.0)
+    ops_helper.ops_define_nodes(elements, length)
     #endregion
 
     #region Support Definition
-    if supports:
-        support_map = {}
-        for support in supports:
-            if not isinstance(support, dict):
-                continue
-
-            location = float(support.get("location", 0.0))
-            dofs = support.get("degreesOfFreedom", {}) or {}
-            if not isinstance(dofs, dict):
-                dofs = {}
-
-            x_position = max(0.0, min(float(location), length))
-            node_tag = int(round((x_position / length) * elements)) + 1 if length > 0 else 1
-            node_tag = max(1, min(node_tag, elements + 1))
-
-            support_info = support_map.setdefault(
-                node_tag,
-                {"location": x_position, "fixity": [0, 0, 0]},
-            )
-            current_fix = support_info["fixity"]
-            current_fix[0] = current_fix[0] or int(bool(dofs.get("N", False)))
-            current_fix[1] = current_fix[1] or int(bool(dofs.get("V", False)))
-            current_fix[2] = current_fix[2] or int(bool(dofs.get("M", False)))
-
-        for node_tag, support_info in support_map.items():
-            ops.fix(node_tag, *support_info["fixity"])
-    else:
-        ops.fix(1, 1, 1, 1)
-        ops.fix(elements + 1, 1, 1, 1)
+    support_map = ops_helper.ops_define_supports(supports, elements, length)
     #endregion
 
     #region Geometric Transformation
-    ops.geomTransf("Linear", 1)
+    ops_helper.ops_geomTrans_Linear()
     #endregion
 
     #region Element Definition
-    for element_tag in range(1, elements + 1):
-        ops.element(
-            "elasticBeamColumn",
-            element_tag,
-            element_tag,
-            element_tag + 1,
-            area,
-            elastic_modulus,
-            inertia,
-            1,
-        )
+    ops_helper.ops_define_element(elements, area, elastic_modulus, inertia)
     #endregion
 
     #region Time Series and Pattern
-    ops.timeSeries("Linear", 1)
-    ops.pattern("Plain", 1, 1)
+    ops_helper.ops_timeSeries_Linear()
+    ops_helper.ops_pattern_Plain()
     #endregion
 
     #region Load Definition
-    for element_tag in range(1, elements + 1):
-        ops.eleLoad("-ele", element_tag, "-type", "-beamUniform", distributed_load)
-
-    for point_load in point_loads:
-        if not isinstance(point_load, dict):
-            continue
-
-        location = float(point_load.get("location", 0.0))
-        magnitude = float(point_load.get("magnitude", 0.0))
-        x_position = max(0.0, min(location, length))
-        node_tag = int(round((x_position / length) * elements)) + 1 if length > 0 else 1
-        node_tag = max(1, min(node_tag, elements + 1))
-        ops.load(node_tag, 0.0, magnitude, 0.0)
+    ops_helper.ops_define_load(elements, distributed_load, length, point_loads)
     #endregion
 
     #region Analysis Setup
-    ops.system("BandGeneral")
-    ops.numberer("RCM")
-    ops.constraints("Plain")
-    ops.integrator("LoadControl", 1.0)
-    ops.algorithm("Linear")
-    ops.analysis("Static")
-    if ops.analyze(1) != 0:
-        raise RuntimeError("OpenSees analysis failed")
-    ops.reactions()
+    ops_helper.ops_define_analysis_setup()
+    ops_helper.ops_perform_analysis()
     #endregion
 
     #region Result Arrays Initialization
-    x = np.linspace(0.0, length, elements + 1)
-    axial = np.zeros(elements + 1)
-    shear = np.zeros(elements + 1)
-    moment = np.zeros(elements + 1)
     #endregion
 
     #region Element Forces in Local Coordinates (N_i, V_i, M_i, N_j, V_j, M_j)
-    for element_tag in range(1, elements + 1):
-        force = ops.eleForce(element_tag)
-        if element_tag == 1:
-            axial[0], shear[0], moment[0] = force[:3]
-        axial[element_tag] = -force[3]
-        shear[element_tag] = -force[4]
-        moment[element_tag] = -force[5]
+    x, [axial, shear, moment] = ops_helper.ops_element_forces(length, elements)
     #endregion
 
     #region Support Reactions
-    support_reactions = []
-    if supports:
-        for node_tag, info in support_map.items():
-            reactions = ops.nodeReaction(node_tag)
-            support_reactions.append(
-                {
-                    "location": round(float(info["location"]), 2),
-                    "reactions": {
-                        "axial": round(float(reactions[0]), 2),
-                        "shear": round(float(reactions[1]), 2),
-                        "moment": round(float(reactions[2]), 2),
-                    },
-                }
-            )
-    else:
-        left_reactions = ops.nodeReaction(1)
-        right_reactions = ops.nodeReaction(elements + 1)
-        support_reactions = [
-            {
-                "location": 0.0,
-                "reactions": {
-                    "axial": round(float(left_reactions[0]), 2),
-                    "shear": round(float(left_reactions[1]), 2),
-                    "moment": round(float(left_reactions[2]), 2),
-                },
-            },
-            {
-                "location": round(float(length), 2),
-                "reactions": {
-                    "axial": round(float(right_reactions[0]), 2),
-                    "shear": round(float(right_reactions[1]), 2),
-                    "moment": round(float(right_reactions[2]), 2),
-                },
-            },
-        ]
+    support_reactions = ops_helper.ops_support_reactions(supports, support_map)
     #endregion
 
     #region Plot Internal Force Diagrams
-    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 8), constrained_layout=True)
-    diagrams = (
-        (axial / 1e3, "Axial force N (kN)", "tab:blue"),
-        (shear / 1e3, "Shear force V (kN)", "tab:orange"),
-        (moment / 1e3, "Bending moment M (kN m)", "tab:green"),
-    )
-    for axis, (values, ylabel, color) in zip(axes, diagrams):
-        axis.axhline(0.0, color="black", linewidth=0.8)
-        axis.plot(x, values, color=color, linewidth=2)
-        axis.fill_between(x, 0.0, values, color=color, alpha=0.2)
-        axis.set_ylabel(ylabel)
-        axis.grid(True, alpha=0.3)
-
-    axes[-1].set_xlabel("Beam coordinate x (m)")
-    fig.suptitle("Simply Supported Beam: Internal Force Diagrams")
+    fig = ops_helper.plot_internal_forces(x, [axial, shear, moment])
     #endregion
 
     #region Save Plot to Data URL
-    plot_buffer = BytesIO()
-    fig.savefig(plot_buffer, format="png", dpi=150)
-    plot_data_url = "data:image/png;base64," + base64.b64encode(
-        plot_buffer.getvalue()
-    ).decode("ascii")
-    plt.close(fig)
+    plot_data_url = ops_helper.save_plot_to_data_url(fig)
     #endregion
 
-    #region Points Along the Beam
-    points = [
-        {
-            "location": float(position),
-            "internalForces": {
-                "axial": round(float(axial_value), 2),
-                "shear": round(float(shear_value), 2),
-                "moment": round(float(moment_value), 2),
-            }
-        }
-        for position, axial_value, shear_value, moment_value in zip(
-            x, axial, shear, moment
-        )
-    ]
+    #region Internal Forces At Points Along the Beam
+    points = ops_helper.internal_forces_at_points(x, [axial, shear, moment])
     #endregion
 
     #region Return Result Dictionary
