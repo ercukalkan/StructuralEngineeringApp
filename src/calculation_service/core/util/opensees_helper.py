@@ -27,7 +27,7 @@ def ops_define_supports(supports, number_of_elements, length):
             sup_node_tag = int(round(((sup_location / length) * number_of_elements))) + 1
             dofN, dofV, dofM = sup_dofs.values()
 
-            ops.fix(int(round(sup_node_tag)), int(dofN), int(dofV), int(dofM))
+            ops.fix(sup_node_tag, int(dofN), int(dofV), int(dofM))
     else:
         ops.fix(1, 1, 1, 1)
         ops.fix(number_of_elements + 1, 1, 1 ,1)
@@ -55,7 +55,9 @@ def ops_timeSeries_Linear():
 def ops_pattern_Plain():
     ops.pattern('Plain', 1, 1)
 
-def ops_define_load(number_of_elements, distributed_load, length, point_loads=None):
+def ops_define_load(number_of_elements, distributed_load, length, point_loads):
+    if distributed_load == 0.0 and not point_loads:
+        return
     for element_tag in range(1, number_of_elements + 1):
             ops.eleLoad("-ele", element_tag, "-type", "-beamUniform", distributed_load)
 
@@ -180,3 +182,27 @@ def ops_result_dictionary(length, number_of_elements, distributed_load, points, 
         "supportReactions": support_reactions,
         "plot": {"format": "png", "dataUrl": plot_data_url},
     }
+
+def ops_setup(number_of_elements, length, supports, area, elastic_modulus, inertia, distributed_load, point_loads):
+    ops_define_2d_model()
+    ops_define_nodes(number_of_elements, length)
+    ops_define_supports(supports, number_of_elements, length)
+    ops_geomTrans_Linear()
+    ops_define_element(number_of_elements, area, elastic_modulus, inertia)
+    ops_timeSeries_Linear()
+    ops_pattern_Plain()
+    ops_define_load(number_of_elements, distributed_load, length, point_loads)
+    ops_define_analysis_setup()
+
+def ops_perform(length, number_of_elements, supports):
+    ops_perform_analysis()
+    x, [axial, shear, moment] = ops_element_forces(length, number_of_elements)
+    support_reactions = ops_support_reactions(supports, length, number_of_elements)
+    points = ops_internal_forces_at_points(x, [axial, shear, moment])
+
+    return x, [axial, shear, moment], support_reactions, points
+
+def plot(x, forces):
+    fig = ops_plot_internal_forces(x, forces)
+    return ops_save_plot_to_data_url(fig)
+    
