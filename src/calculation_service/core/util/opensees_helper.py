@@ -14,7 +14,7 @@ def ops_define_3d_model():
 
 def ops_define_nodes(number_of_elements, length):
     for node_tag in range(number_of_elements + 1):
-            ops.node(node_tag + 1, length * node_tag / number_of_elements, 0.0)
+        ops.node(node_tag + 1, length * node_tag / number_of_elements, 0.0)
 
 def ops_define_supports(supports, number_of_elements, length):
     if supports:
@@ -70,7 +70,7 @@ def ops_define_load(number_of_elements, distributed_load, length, point_loads):
         x_position = max(0.0, min(location, length))
         node_tag = int(round((x_position / length) * number_of_elements)) + 1 if length > 0 else 1
         node_tag = max(1, min(node_tag, number_of_elements + 1))
-        ops.load(node_tag, 0.0, magnitude, 0.0)
+        ops.load(node_tag, 0.0, magnitude, 0.0) # AXIAL POINT LOAD
 
 def ops_define_analysis_setup():
     ops.system('BandGeneral')
