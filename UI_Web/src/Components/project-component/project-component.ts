@@ -6,8 +6,16 @@ import { inputUnitPairs, outputUnitPairs } from '../../Types/UnitPair';
 import { FormsModule } from '@angular/forms';
 import AnalysisResponse2D from '../../Interfaces/AnalysisResponse2D';
 import AnalysisRequest2D from '../../Interfaces/AnalysisRequest2D';
+import Support from '../../Interfaces/Support';
 import SupportReaction from '../../Interfaces/SupportReaction';
 import { UnitConverter as UC } from '../../util/UnitConverter';
+
+type InternalForce = 'axial' | 'shear' | 'moment';
+
+interface TooltipDetail {
+  label: string;
+  value: string | number;
+}
 
 @Component({
   selector: 'app-project-component',
@@ -26,7 +34,25 @@ export class ProjectComponent {
   errorMessage = '';
   result: AnalysisResponse2D | null = null;
   convertedResult: AnalysisResponse2D | null = null;
+  calculatedModel: AnalysisRequest2D | null = null;
+  tooltip: { title: string; details: TooltipDetail[]; x: number; y: number } | null = null;
   outputUnits: UnitPair = this.outputUnitOptions[1];
+
+  readonly diagram = {
+    left: 110,
+    width: 830,
+    beamY: 130,
+  };
+  readonly internalForceDiagrams: {
+    force: InternalForce;
+    label: string;
+    color: string;
+    top: number;
+  }[] = [
+    { force: 'axial', label: 'Axial force', color: '#38bdf8', top: 26 },
+    { force: 'shear', label: 'Shear force', color: '#fb923c', top: 140 },
+    { force: 'moment', label: 'Bending moment', color: '#a3e635', top: 254 },
+  ];
 
   form: AnalysisRequest2D = {
     length: 8,
@@ -111,6 +137,85 @@ export class ProjectComponent {
     return [];
   }
 
+  get elementSegments(): number[] {
+    const elements = Number(this.result?.beam.elements);
+    return Number.isInteger(elements) && elements > 0 ? Array.from({ length: elements }) : [];
+  }
+
+  get distributedLoadXs(): number[] {
+    return Array.from(
+      { length: 13 },
+      (_, index) => this.diagram.left + (this.diagram.width * index) / 12,
+    );
+  }
+
+  beamX(location: number, length: number | null | undefined = this.result?.beam.length): number {
+    const beamLength = Number(length);
+
+    if (!Number.isFinite(beamLength) || beamLength <= 0) {
+      return this.diagram.left;
+    }
+
+    const boundedLocation = Math.max(0, Math.min(Number(location), beamLength));
+    return this.diagram.left + (boundedLocation / beamLength) * this.diagram.width;
+  }
+
+  supportLabel(support: Support): string {
+    const { N, V, M } = support.degreesOfFreedom;
+
+    if (N && V && M) return 'Fixed support';
+    if (N && V && !M) return 'Pinned support';
+    if (!N && V && !M) return 'Roller support';
+    return 'Custom restraint';
+  }
+
+  showTooltip(event: MouseEvent, title: string, details: TooltipDetail[]): void {
+    this.tooltip = { title, details, x: event.clientX + 14, y: event.clientY + 14 };
+  }
+
+  moveTooltip(event: MouseEvent): void {
+    if (!this.tooltip) return;
+
+    this.tooltip = { ...this.tooltip, x: event.clientX + 14, y: event.clientY + 14 };
+  }
+
+  hideTooltip(): void {
+    this.tooltip = null;
+  }
+
+  beamTooltipDetails(): TooltipDetail[] {
+    return [
+      { label: 'Elements', value: this.result?.beam.elements ?? 0 },
+      {
+        label: 'Length',
+        value: `${this.convertedResult?.beam.length ?? 0} ${this.convertedResult?.units.length ?? ''}`,
+      },
+    ];
+  }
+
+  internalForcePath(force: InternalForce, top: number): string {
+    const points = this.convertedResult?.points ?? [];
+    const length = this.convertedResult?.beam.length;
+    if (!points.length) return '';
+
+    return points
+      .map((point, index) => {
+        const x = this.beamX(point.location, length);
+        const y = this.internalForceY(point.internalForces[force], force, top);
+        return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+      })
+      .join(' ');
+  }
+
+  internalForceY(value: number, force: InternalForce, top: number): number {
+    const values = (this.convertedResult?.points ?? []).map((point) =>
+      Math.abs(Number(point.internalForces[force])),
+    );
+    const maximum = Math.max(...values, 1);
+    const baseline = top + 38;
+    return baseline - (Number(value) / maximum) * 31;
+  }
+
   convertResultUnits(): void {
     if (!this.result) {
       return;
@@ -151,11 +256,12 @@ export class ProjectComponent {
 
     const points =
       this.result.points?.map((point) => ({
-        ...point,
-        x: UC.ConvertLength(point.location, lengthUnit),
-        axial: UC.ConvertForce(point.internalForces.axial, forceUnit),
-        shear: UC.ConvertForce(point.internalForces.shear, forceUnit),
-        moment: UC.ConvertMoment(point.internalForces.moment, this.outputUnits),
+        location: UC.ConvertLength(point.location, lengthUnit),
+        internalForces: {
+          axial: UC.ConvertForce(point.internalForces.axial, forceUnit),
+          shear: UC.ConvertForce(point.internalForces.shear, forceUnit),
+          moment: UC.ConvertMoment(point.internalForces.moment, this.outputUnits),
+        },
       })) ?? [];
 
     this.convertedResult = {
@@ -176,8 +282,10 @@ export class ProjectComponent {
     this.isLoading = true;
     this.errorMessage = '';
     this.result = null;
+    const request = this.analysisRequest;
+    this.calculatedModel = request;
 
-    this.test.post(this.analysisRequest).subscribe({
+    this.test.post(request).subscribe({
       next: (response) => {
         this.result = response;
         this.convertedResult = response;

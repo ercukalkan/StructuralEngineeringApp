@@ -326,17 +326,242 @@
       </div>
       <!-- #endregion Support Reactions -->
 
-      <!-- #region Force Diagram -->
-      @if (result.plot.dataUrl) {
-        <div class="overflow-hidden mt-4 rounded-2xl border border-slate-700/80 bg-white">
-          <img
-            [src]="result.plot.dataUrl"
-            alt="Simply supported beam force diagram"
-            class="block h-auto w-full"
-          />
+      <!-- #region Structural Model Visualization -->
+      @if (calculatedModel) {
+        <section
+          class="mt-5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-800/70 p-4"
+        >
+          <h3 class="mb-4 text-lg font-bold text-white">Structural model</h3>
+          <svg
+            viewBox="0 0 1000 260"
+            class="block w-full overflow-visible"
+            role="img"
+            aria-label="Calculated beam model showing elements, supports, and loads"
+          >
+            <g
+              class="cursor-help"
+              (mouseenter)="showTooltip($event, 'Beam', beamTooltipDetails())"
+              (mousemove)="moveTooltip($event)"
+              (mouseleave)="hideTooltip()"
+            >
+              @for (element of elementSegments; track $index) {
+                <line
+                  [attr.x1]="diagram.left + (diagram.width * $index) / result.beam.elements"
+                  [attr.x2]="diagram.left + (diagram.width * ($index + 1)) / result.beam.elements"
+                  [attr.y1]="diagram.beamY"
+                  [attr.y2]="diagram.beamY"
+                  stroke="#e2e8f0"
+                  stroke-width="8"
+                />
+              }
+            </g>
+
+            @if (calculatedModel.uniformLoad) {
+              <g
+                class="cursor-help"
+                (mouseenter)="
+                  showTooltip($event, 'Uniform distributed load', [
+                    {
+                      label: 'Magnitude',
+                      value:
+                        calculatedModel.uniformLoad +
+                        ' ' +
+                        calculatedModel.inputUnits?.[0] +
+                        '/' +
+                        calculatedModel.inputUnits?.[1],
+                    },
+                  ])
+                "
+                (mousemove)="moveTooltip($event)"
+                (mouseleave)="hideTooltip()"
+              >
+                <line
+                  [attr.x1]="diagram.left"
+                  [attr.x2]="diagram.left + diagram.width"
+                  y1="38"
+                  y2="38"
+                  stroke="#a3e635"
+                  stroke-width="3"
+                />
+                @for (x of distributedLoadXs; track x) {
+                  <g [attr.transform]="'translate(' + x + ', 38)'">
+                    <line x1="0" y1="0" x2="0" y2="76" stroke="#a3e635" stroke-width="2" />
+                    <path d="M -6 64 L 0 76 L 6 64 Z" fill="#a3e635" />
+                  </g>
+                }
+              </g>
+            }
+
+            @for (pointLoad of calculatedModel.pointLoads; track pointLoad; let index = $index) {
+              <g
+                [attr.transform]="
+                  'translate(' + beamX(pointLoad.location, calculatedModel.length) + ', 70)'
+                "
+                class="cursor-help"
+                (mouseenter)="
+                  showTooltip($event, 'Point load ' + (index + 1), [
+                    {
+                      label: 'Magnitude',
+                      value: pointLoad.magnitude + ' ' + calculatedModel.inputUnits?.[0],
+                    },
+                    {
+                      label: 'Location',
+                      value: pointLoad.location + ' ' + calculatedModel.inputUnits?.[1],
+                    },
+                  ])
+                "
+                (mousemove)="moveTooltip($event)"
+                (mouseleave)="hideTooltip()"
+              >
+                @if (pointLoad.magnitude < 0) {
+                  <line x1="0" y1="0" x2="0" y2="48" stroke="#fb923c" stroke-width="4" />
+                  <path d="M -9 37 L 0 51 L 9 37 Z" fill="#fb923c" />
+                } @else {
+                  <line x1="0" y1="48" x2="0" y2="0" stroke="#fb923c" stroke-width="4" />
+                  <path d="M -9 14 L 0 0 L 9 14 Z" fill="#fb923c" />
+                }
+              </g>
+            }
+
+            @for (support of calculatedModel.supports; track support; let index = $index) {
+              <g
+                [attr.transform]="
+                  'translate(' +
+                  beamX(support.location, calculatedModel.length) +
+                  ', ' +
+                  (diagram.beamY + 4) +
+                  ')'
+                "
+                class="cursor-help"
+                (mouseenter)="
+                  showTooltip($event, supportLabel(support) + ' ' + (index + 1), [
+                    {
+                      label: 'Location',
+                      value: support.location + ' ' + calculatedModel.inputUnits?.[1],
+                    },
+                  ])
+                "
+                (mousemove)="moveTooltip($event)"
+                (mouseleave)="hideTooltip()"
+              >
+                <path
+                  d="M 0 0 L -20 32 L 20 32 Z"
+                  fill="#38bdf8"
+                  stroke="#e0f2fe"
+                  stroke-width="2"
+                />
+                <line x1="-28" y1="36" x2="28" y2="36" stroke="#94a3b8" stroke-width="3" />
+              </g>
+            }
+
+            <g>
+              <line
+                [attr.x1]="diagram.left"
+                [attr.x2]="diagram.left + diagram.width"
+                y1="222"
+                y2="222"
+                stroke="#94a3b8"
+              />
+              <text x="525" y="244" text-anchor="middle" fill="#cbd5e1" font-size="14">
+                {{ convertedResult?.beam?.length }} {{ convertedResult?.units?.length }}
+              </text>
+            </g>
+          </svg>
+        </section>
+      }
+      <!-- #endregion Structural Model Visualization -->
+
+      <!-- #region Internal Force Visualization -->
+      <section
+        class="mt-5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-800/70 p-4"
+      >
+        <h3 class="mb-4 text-lg font-bold text-white">Internal force diagrams</h3>
+        <svg
+          viewBox="0 0 1000 370"
+          class="block w-full overflow-visible"
+          role="img"
+          aria-label="Axial force, shear force, and bending moment diagrams"
+        >
+          @for (forceDiagram of internalForceDiagrams; track forceDiagram.force) {
+            <g>
+              <text x="12" [attr.y]="forceDiagram.top + 42" fill="#cbd5e1" font-size="13">
+                {{ forceDiagram.label }}
+              </text>
+              <line
+                [attr.x1]="diagram.left"
+                [attr.x2]="diagram.left + diagram.width"
+                [attr.y1]="forceDiagram.top + 38"
+                [attr.y2]="forceDiagram.top + 38"
+                stroke="#64748b"
+              />
+              <path
+                [attr.d]="internalForcePath(forceDiagram.force, forceDiagram.top)"
+                fill="none"
+                [attr.stroke]="forceDiagram.color"
+                stroke-width="3"
+              />
+              @for (point of convertedResult?.points; track point.location) {
+                <circle
+                  [attr.cx]="beamX(point.location, convertedResult?.beam?.length)"
+                  [attr.cy]="
+                    internalForceY(
+                      point.internalForces[forceDiagram.force],
+                      forceDiagram.force,
+                      forceDiagram.top
+                    )
+                  "
+                  r="8"
+                  fill="transparent"
+                  class="cursor-help"
+                  (mouseenter)="
+                    showTooltip($event, forceDiagram.label, [
+                      {
+                        label: 'Position',
+                        value: point.location + ' ' + (convertedResult?.units?.length ?? ''),
+                      },
+                      {
+                        label: 'Value',
+                        value:
+                          point.internalForces[forceDiagram.force] +
+                          ' ' +
+                          (forceDiagram.force === 'moment'
+                            ? convertedResult?.units?.moment
+                            : convertedResult?.units?.force),
+                      },
+                    ])
+                  "
+                  (mousemove)="moveTooltip($event)"
+                  (mouseleave)="hideTooltip()"
+                ></circle>
+              }
+            </g>
+          }
+        </svg>
+      </section>
+      <!-- #endregion Internal Force Visualization -->
+
+      @if (tooltip) {
+        <div
+          class="pointer-events-none fixed z-20 min-w-47.5 max-w-[min(300px,calc(100vw-28px))] rounded-md border border-sky-400/55 bg-slate-950/98 p-3 text-slate-200 shadow-[0_12px_28px_rgb(2_6_23/0.45)]"
+          role="tooltip"
+          [style.left.px]="tooltip.x"
+          [style.top.px]="tooltip.y"
+        >
+          <strong class="mb-2 block text-[0.8rem] tracking-normal text-sky-300">
+            {{ tooltip.title }}
+          </strong>
+          <dl
+            class="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3.5 gap-y-1.25 text-xs leading-[1.35]"
+          >
+            @for (detail of tooltip.details; track detail.label) {
+              <dt class="text-slate-400">{{ detail.label }}</dt>
+              <dd class="m-0 overflow-wrap-anywhere text-right text-slate-50">
+                {{ detail.value }}
+              </dd>
+            }
+          </dl>
         </div>
       }
-      <!-- #endregion Force Diagram -->
     </section>
   }
 </div>
