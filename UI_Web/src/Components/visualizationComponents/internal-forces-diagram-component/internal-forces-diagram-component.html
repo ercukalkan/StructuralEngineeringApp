@@ -1,0 +1,87 @@
+<section class="mt-5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
+  <h3 class="mb-4 text-lg font-bold text-white">Internal force diagrams</h3>
+  <svg
+    viewBox="0 0 1000 370"
+    class="block w-full overflow-visible"
+    role="img"
+    aria-label="Axial force, shear force, and bending moment diagrams"
+  >
+    @for (forceDiagram of internalForceDiagrams; track forceDiagram.force) {
+      <g>
+        <text x="12" [attr.y]="forceDiagram.top + 42" fill="#cbd5e1" font-size="13">
+          {{ forceDiagram.label }}
+        </text>
+        <line
+          [attr.x1]="diagram.left"
+          [attr.x2]="diagram.left + diagram.width"
+          [attr.y1]="forceDiagram.top + 38"
+          [attr.y2]="forceDiagram.top + 38"
+          stroke="#64748b"
+        />
+        <path
+          [attr.d]="internalForcePath(forceDiagram.force, forceDiagram.top)"
+          fill="none"
+          [attr.stroke]="forceDiagram.color"
+          stroke-width="3"
+        />
+        @for (point of convertedResult?.points; track point.location) {
+          <circle
+            [attr.cx]="beamX(point.location, convertedResult?.beam?.length)"
+            [attr.cy]="
+              internalForceY(
+                point.internalForces[forceDiagram.force],
+                forceDiagram.force,
+                forceDiagram.top
+              )
+            "
+            r="8"
+            fill="transparent"
+            class="cursor-help"
+            (mouseenter)="
+              showTooltip($event, forceDiagram.label, [
+                {
+                  label: 'Position',
+                  value: point.location + ' ' + (convertedResult?.units?.length ?? ''),
+                },
+                {
+                  label: 'Value',
+                  value:
+                    point.internalForces[forceDiagram.force] +
+                    ' ' +
+                    (forceDiagram.force === 'moment'
+                      ? convertedResult?.units?.moment
+                      : convertedResult?.units?.force),
+                },
+              ])
+            "
+            (mousemove)="moveTooltip($event)"
+            (mouseleave)="hideTooltip()"
+          ></circle>
+        }
+      </g>
+    }
+  </svg>
+
+  @if (tooltip) {
+    <div
+      class="pointer-events-none fixed z-20 min-w-47.5 max-w-[min(300px,calc(100vw-28px))] rounded-md border border-sky-400/55 bg-slate-950/98 p-3 text-slate-200 shadow-[0_12px_28px_rgb(2_6_23/0.45)]"
+      role="tooltip"
+      [style.left.px]="tooltip.x"
+      [style.top.px]="tooltip.y"
+    >
+      <strong class="mb-2 block text-[0.8rem] tracking-normal text-sky-300">
+        {{ tooltip.title }}
+      </strong>
+      <dl
+        class="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3.5 gap-y-1.25 text-xs leading-[1.35]"
+      >
+        @for (detail of tooltip.details; track detail.label) {
+          <dt class="text-slate-400">{{ detail.label }}</dt>
+          <dd class="m-0 overflow-wrap-anywhere text-right text-slate-50">
+            {{ detail.value }}
+          </dd>
+        }
+      </dl>
+    </div>
+  }
+</section>
