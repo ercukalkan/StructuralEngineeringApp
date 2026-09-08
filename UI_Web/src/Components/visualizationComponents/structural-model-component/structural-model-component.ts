@@ -22,8 +22,8 @@ export class StructuralModelComponent {
 
   get distributedLoadXs(): number[] {
     return Array.from(
-      { length: 13 },
-      (_, index) => this.diagram.left + (this.diagram.width * index) / 12,
+      { length: 14 },
+      (_, index) => this.diagram.left + (this.diagram.width * index) / 13,
     );
   }
 

@@ -1,7 +1,7 @@
 <section class="mt-5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
   <h3 class="mb-4 text-lg font-bold text-white">Internal force diagrams</h3>
   <svg
-    viewBox="0 0 1000 370"
+    viewBox="0 0 1000 400"
     class="block w-full overflow-visible"
     role="img"
     aria-label="Axial force, shear force, and bending moment diagrams"
@@ -18,6 +18,53 @@
           [attr.y2]="forceDiagram.top + 38"
           stroke="#64748b"
         />
+
+        <!-- Vertical (force magnitude) axis -->
+        <g stroke="#94a3b8" stroke-width="1.5">
+          <line
+            [attr.x1]="diagram.left"
+            [attr.x2]="diagram.left"
+            [attr.y1]="forceDiagram.top"
+            [attr.y2]="forceDiagram.top + 78"
+          />
+          @for (offset of verticalAxisTickOffsets; track offset) {
+            <line
+              [attr.x1]="diagram.left - 4"
+              [attr.x2]="diagram.left + 4"
+              [attr.y1]="forceDiagram.top + offset"
+              [attr.y2]="forceDiagram.top + offset"
+            />
+          }
+        </g>
+
+        <!-- Vertical axis value labels -->
+        <text
+          [attr.x]="diagram.left - 8"
+          [attr.y]="forceDiagram.top + 4"
+          text-anchor="end"
+          fill="#94a3b8"
+          font-size="11"
+        >
+          {{ formatAxisValue(forceMaximum(forceDiagram.force)) }}
+        </text>
+        <text
+          [attr.x]="diagram.left - 8"
+          [attr.y]="forceDiagram.top + 42"
+          text-anchor="end"
+          fill="#94a3b8"
+          font-size="11"
+        >
+          0
+        </text>
+        <text
+          [attr.x]="diagram.left - 8"
+          [attr.y]="forceDiagram.top + 80"
+          text-anchor="end"
+          fill="#94a3b8"
+          font-size="11"
+        >
+          {{ formatAxisValue(-forceMaximum(forceDiagram.force)) }}
+        </text>
         <path
           [attr.d]="internalForcePath(forceDiagram.force, forceDiagram.top)"
           fill="none"
@@ -59,6 +106,35 @@
           ></circle>
         }
       </g>
+    }
+
+    <!-- Shared horizontal (beam position) axis -->
+    <g stroke="#94a3b8" stroke-width="1.5">
+      <line
+        [attr.x1]="diagram.left - 6"
+        [attr.x2]="diagram.left + diagram.width + 10"
+        [attr.y1]="horizontalAxisY"
+        [attr.y2]="horizontalAxisY"
+      />
+      @for (tick of horizontalAxisTicks; track tick.x) {
+        <line
+          [attr.x1]="tick.x"
+          [attr.x2]="tick.x"
+          [attr.y1]="horizontalAxisY - 4"
+          [attr.y2]="horizontalAxisY + 4"
+        />
+      }
+    </g>
+    @for (tick of horizontalAxisTicks; track tick.x) {
+      <text
+        [attr.x]="tick.x"
+        [attr.y]="horizontalAxisY + 18"
+        text-anchor="middle"
+        fill="#94a3b8"
+        font-size="11"
+      >
+        {{ tick.label }}
+      </text>
     }
   </svg>
 

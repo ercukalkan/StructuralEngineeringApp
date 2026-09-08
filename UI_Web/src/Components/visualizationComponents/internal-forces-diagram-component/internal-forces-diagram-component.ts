@@ -65,11 +65,37 @@ export class InternalForcesDiagramComponent {
   }
 
   internalForceY(value: number, force: InternalForce, top: number): number {
+    const maximum = this.forceMaximum(force);
+    const baseline = top + 38;
+    return baseline - (Number(value) / maximum) * 40;
+  }
+
+  forceMaximum(force: InternalForce): number {
     const values = (this.convertedResult?.points ?? []).map((point) =>
       Math.abs(Number(point.internalForces[force])),
     );
-    const maximum = Math.max(...values, 1);
-    const baseline = top + 38;
-    return baseline - (Number(value) / maximum) * 31;
+    return Math.max(...values, 1);
+  }
+
+  formatAxisValue(value: number): string {
+    return `${Math.round(value * 100) / 100}`;
+  }
+
+  readonly verticalAxisTickOffsets = [0, 19.5, 39, 58.5, 78];
+
+  get horizontalAxisY(): number {
+    const lowestDiagramTop = Math.max(...this.internalForceDiagrams.map((item) => item.top), 0);
+    return lowestDiagramTop + 78 + 24;
+  }
+
+  get horizontalAxisTicks(): { x: number; label: string }[] {
+    const length = Number(this.convertedResult?.beam.length);
+    if (!Number.isFinite(length) || length <= 0) return [];
+
+    const divisions = 4;
+    return Array.from({ length: divisions + 1 }, (_, index) => {
+      const location = (length * index) / divisions;
+      return { x: this.beamX(location, length), label: `${Math.round(location * 100) / 100}` };
+    });
   }
 }
