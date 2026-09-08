@@ -47,6 +47,15 @@ export class StructuralModelComponent {
     return 'Custom restraint';
   }
 
+  supportType(support: Support): 'fixed' | 'pinned' | 'roller' | 'custom' {
+    const { N, V, M } = support.degreesOfFreedom;
+
+    if (N && V && M) return 'fixed';
+    if (N && V && !M) return 'pinned';
+    if (!N && V && !M) return 'roller';
+    return 'custom';
+  }
+
   showTooltip(event: MouseEvent, title: string, details: TooltipDetail[]): void {
     this.tooltip = { title, details, x: event.clientX + 14, y: event.clientY + 14 };
   }
