@@ -77,8 +77,13 @@ export class InternalForcesDiagramComponent {
     return Math.max(...values, 1);
   }
 
+  formatValue(value: number | null | undefined): string {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+  }
+
   formatAxisValue(value: number): string {
-    return `${Math.round(value * 100) / 100}`;
+    return this.formatValue(value);
   }
 
   readonly verticalAxisTickOffsets = [0, 19.5, 39, 58.5, 78];
@@ -95,7 +100,7 @@ export class InternalForcesDiagramComponent {
     const divisions = 4;
     return Array.from({ length: divisions + 1 }, (_, index) => {
       const location = (length * index) / divisions;
-      return { x: this.beamX(location, length), label: `${Math.round(location * 100) / 100}` };
+      return { x: this.beamX(location, length), label: this.formatValue(location) };
     });
   }
 }

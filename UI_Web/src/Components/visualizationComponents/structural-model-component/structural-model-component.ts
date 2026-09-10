@@ -70,12 +70,17 @@ export class StructuralModelComponent {
     this.tooltip = null;
   }
 
+  formatValue(value: number | null | undefined): string {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+  }
+
   beamTooltipDetails(): TooltipDetail[] {
     return [
       { label: 'Elements', value: this.result?.beam.elements ?? 0 },
       {
         label: 'Length',
-        value: `${this.convertedResult?.beam.length ?? 0} ${this.convertedResult?.units.length ?? ''}`,
+        value: `${this.formatValue(this.convertedResult?.beam.length)} ${this.convertedResult?.units.length ?? ''}`,
       },
     ];
   }

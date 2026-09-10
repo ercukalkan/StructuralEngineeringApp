@@ -74,7 +74,7 @@
             },
             {
               label: 'Location',
-              value: pointLoad.location + ' ' + calculatedModel.inputUnits?.[1],
+              value: formatValue(pointLoad.location) + ' ' + calculatedModel.inputUnits?.[1],
             },
           ])
         "
@@ -105,7 +105,7 @@
           showTooltip($event, supportLabel(support) + ' ' + (index + 1), [
             {
               label: 'Location',
-              value: support.location + ' ' + calculatedModel.inputUnits?.[1],
+              value: formatValue(support.location) + ' ' + calculatedModel.inputUnits?.[1],
             },
           ])
         "
@@ -185,7 +185,7 @@
         stroke="#94a3b8"
       />
       <text x="525" y="244" text-anchor="middle" fill="#cbd5e1" font-size="14">
-        {{ convertedResult?.beam?.length }} {{ convertedResult?.units?.length }}
+        {{ formatValue(convertedResult?.beam?.length) }} {{ convertedResult?.units?.length }}
       </text>
     </g>
   </svg>

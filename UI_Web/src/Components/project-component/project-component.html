@@ -305,7 +305,8 @@
         @for (supportReaction of supportReactionRows; track supportReaction.location) {
           <div class="rounded-xl border border-slate-700/80 bg-slate-800/70 p-4">
             <h4 class="mb-3 text-base font-semibold text-white">
-              Support at {{ supportReaction.location }} {{ convertedResult?.units?.length }}
+              Support at {{ formatValue(supportReaction.location) }}
+              {{ convertedResult?.units?.length }}
             </h4>
             <div class="grid grid-cols-3 gap-3 text-sm text-slate-300">
               <p>

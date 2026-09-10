@@ -81,19 +81,21 @@
                 forceDiagram.top
               )
             "
-            r="8"
-            fill="transparent"
+            r="2.5"
+            fill="#f8fafc"
+            stroke="rgba(148, 163, 184, 0.8)"
+            stroke-width="1.5"
             class="cursor-help"
             (mouseenter)="
               showTooltip($event, forceDiagram.label, [
                 {
                   label: 'Position',
-                  value: point.location + ' ' + (convertedResult?.units?.length ?? ''),
+                  value: formatValue(point.location) + ' ' + (convertedResult?.units?.length ?? ''),
                 },
                 {
                   label: 'Value',
                   value:
-                    point.internalForces[forceDiagram.force] +
+                    formatValue(point.internalForces[forceDiagram.force]) +
                     ' ' +
                     (forceDiagram.force === 'moment'
                       ? convertedResult?.units?.moment

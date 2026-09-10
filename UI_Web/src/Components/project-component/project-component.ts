@@ -134,6 +134,11 @@ export class ProjectComponent {
     return [];
   }
 
+  formatValue(value: number | null | undefined): string {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+  }
+
   convertResultUnits(): void {
     if (!this.result) {
       return;
