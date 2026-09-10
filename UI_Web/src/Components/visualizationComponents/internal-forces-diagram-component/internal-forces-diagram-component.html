@@ -155,6 +155,49 @@
       stroke="#e2e8f0"
       stroke-width="1"
     />
+    @for (support of calculatedModel?.supports; track support; let index = $index) {
+      <g
+        [attr.transform]="'translate(' + beamX(support.location, calculatedModel.length) + ', 58)'"
+        class="cursor-help"
+        (mouseenter)="
+          showTooltip($event, 'Support ' + (index + 1), [
+            {
+              label: 'Position',
+              value: formatValue(support.location) + ' ' + (convertedResult?.units?.length ?? ''),
+            },
+          ])
+        "
+        (mousemove)="moveTooltip($event)"
+        (mouseleave)="hideTooltip()"
+      >
+        @switch (supportType(support)) {
+          @case ('fixed') {
+            <path d="M 0 -20 0 20" stroke="#cbd5e1" stroke-width="3" />
+            <g stroke="#cbd5e1" stroke-width="1.5">
+              <line x1="0" y1="-20" x2="-10" y2="-14" />
+              <line x1="0" y1="-10" x2="-10" y2="-4" />
+              <line x1="0" y1="0" x2="-10" y2="6" />
+              <line x1="0" y1="10" x2="-10" y2="16" />
+              <line x1="0" y1="20" x2="-10" y2="26" />
+            </g>
+          }
+          @case ('pinned') {
+            <path d="M 0 0 L -12 18 L 12 18 Z" fill="#38bdf8" stroke="#e0f2fe" />
+            <line x1="-17" y1="18" x2="17" y2="18" stroke="#cbd5e1" stroke-width="2" />
+          }
+          @case ('roller') {
+            <path d="M 0 0 L -12 16 L 12 16 Z" fill="#38bdf8" stroke="#e0f2fe" />
+            <circle cx="-7" cy="22" r="2.5" fill="#e0f2fe" />
+            <circle cx="0" cy="22" r="2.5" fill="#e0f2fe" />
+            <circle cx="7" cy="22" r="2.5" fill="#e0f2fe" />
+            <line x1="-17" y1="27" x2="17" y2="27" stroke="#cbd5e1" stroke-width="2" />
+          }
+          @default {
+            <circle cx="0" cy="0" r="6" fill="#a855f7" stroke="#f3e8ff" />
+          }
+        }
+      </g>
+    }
     @for (point of convertedResult?.points; track point.location; let index = $index) {
       <circle
         [attr.cx]="beamX(point.location, convertedResult?.beam?.length)"

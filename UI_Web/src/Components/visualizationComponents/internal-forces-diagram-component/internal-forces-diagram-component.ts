@@ -14,6 +14,7 @@ export class InternalForcesDiagramComponent {
   tooltip: { title: string; details: TooltipDetail[]; x: number; y: number } | null = null;
   @Input() diagram: any;
   @Input() result: AnalysisResponse2D | null = null;
+  @Input() calculatedModel: any;
   @Input() internalForceDiagrams: {
     force: InternalForce;
     label: string;
@@ -34,6 +35,15 @@ export class InternalForcesDiagramComponent {
 
     const boundedLocation = Math.max(0, Math.min(Number(location), beamLength));
     return this.diagram.left + (boundedLocation / beamLength) * this.diagram.width;
+  }
+
+  supportType(support: any): 'fixed' | 'pinned' | 'roller' | 'custom' {
+    const { N, V, M } = support.degreesOfFreedom;
+
+    if (N && V && M) return 'fixed';
+    if (N && V && !M) return 'pinned';
+    if (!N && V && !M) return 'roller';
+    return 'custom';
   }
 
   showTooltip(event: MouseEvent, title: string, details: TooltipDetail[]): void {
