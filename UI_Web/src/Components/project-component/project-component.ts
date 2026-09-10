@@ -147,7 +147,7 @@ export class ProjectComponent {
     const [forceUnit, lengthUnit] = this.outputUnits;
 
     // Convert support reactions, beam, and points using the conversion functions
-    const supportReactions = Array.isArray(this.result.supportReactions)
+    const convSupportReactions = Array.isArray(this.result.supportReactions)
       ? this.result.supportReactions.map((supportReaction) => ({
           location: UC.ConvertLength(supportReaction.location, lengthUnit),
           reactions: {
@@ -158,13 +158,13 @@ export class ProjectComponent {
         }))
       : [];
 
-    const units = {
+    const convUnits = {
       length: lengthUnit,
       force: forceUnit,
       moment: `${forceUnit} ${lengthUnit}`,
     };
 
-    const beam = {
+    const convBeam = {
       ...this.result.beam,
       length: UC.ConvertLength(this.result.beam.length, lengthUnit),
       distributedLoad: {
@@ -177,7 +177,7 @@ export class ProjectComponent {
       },
     };
 
-    const points =
+    const convPoints =
       this.result.points?.map((point) => ({
         location: UC.ConvertLength(point.location, lengthUnit),
         internalForces: {
@@ -187,12 +187,21 @@ export class ProjectComponent {
         },
       })) ?? [];
 
+    const convDisplacements =
+      this.result.displacements?.map((disp) => ({
+        location: UC.ConvertLength(disp.location, lengthUnit),
+        axial: UC.ConvertLength(disp.axial, lengthUnit),
+        vertical: UC.ConvertLength(disp.vertical, lengthUnit),
+        rotational: disp.rotational,
+      })) ?? [];
+
     this.convertedResult = {
       ...this.result,
-      units,
-      beam,
-      points,
-      supportReactions,
+      units: convUnits,
+      beam: convBeam,
+      points: convPoints,
+      displacements: convDisplacements,
+      supportReactions: convSupportReactions,
     };
   }
 
@@ -210,6 +219,7 @@ export class ProjectComponent {
 
     this.test.post(request).subscribe({
       next: (response) => {
+        debugger;
         this.result = response;
         this.convertedResult = response;
         this.isLoading = false;

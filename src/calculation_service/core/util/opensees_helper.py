@@ -162,7 +162,20 @@ def ops_internal_forces_at_points(x, forces):
     ]
     return points
 
-def ops_result_dictionary(length, number_of_elements, distributed_load, points, support_reactions, plot_data_url):
+def ops_node_displacements(length, number_of_elements):
+    x = np.linspace(0, length, number_of_elements + 1)
+    displacements = [
+        {
+            "location": float(x[index]),
+            "axial": round(float(ops.nodeDisp(index + 1)[0]), 6),
+            "vertical": round(float(ops.nodeDisp(index + 1)[1]), 6),
+            "rotational": round(float(ops.nodeDisp(index + 1)[2]), 6),
+        }
+        for index in range(number_of_elements + 1)
+    ]
+    return displacements
+
+def ops_result_dictionary(length, number_of_elements, distributed_load, points, support_reactions, plot_data_url, displacements):
     return {
         "units": {
             "length": "m", 
@@ -181,6 +194,7 @@ def ops_result_dictionary(length, number_of_elements, distributed_load, points, 
         "points": points,
         "supportReactions": support_reactions,
         "plot": {"format": "png", "dataUrl": plot_data_url},
+        "displacements": displacements,
     }
 
 def ops_setup(number_of_elements, length, supports, area, elastic_modulus, inertia, distributed_load, point_loads):
@@ -198,9 +212,10 @@ def ops_perform(length, number_of_elements, supports):
     ops_perform_analysis()
     x, [axial, shear, moment] = ops_element_forces(length, number_of_elements)
     support_reactions = ops_support_reactions(supports, length, number_of_elements)
+    displacements = ops_node_displacements(length, number_of_elements)
     points = ops_internal_forces_at_points(x, [axial, shear, moment])
 
-    return x, [axial, shear, moment], support_reactions, points
+    return x, [axial, shear, moment], support_reactions, points, displacements
 
 def plot(x, forces):
     fig = ops_plot_internal_forces(x, forces)

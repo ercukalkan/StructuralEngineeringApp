@@ -53,7 +53,7 @@ def _run_analysis(length, elements, supports, elastic_modulus, area, inertia, di
         distributed_load,
         point_loads,
     )
-    x, forces, support_reactions, points = ops_helper.ops_perform(
+    x, forces, support_reactions, points, displacements = ops_helper.ops_perform(
         length, elements, supports
     )
     plot_data_url = ops_helper.plot(x, forces)
@@ -64,6 +64,7 @@ def _run_analysis(length, elements, supports, elastic_modulus, area, inertia, di
         points,
         support_reactions,
         plot_data_url,
+        displacements,
     )
 
 

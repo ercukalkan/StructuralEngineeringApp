@@ -1,5 +1,6 @@
 import SupportReaction from './SupportReaction';
 import PointInternalForces from './PointInternalForces';
+import PointDisplacements from './PointDisplacements';
 
 export default interface AnalysisResponse2D {
   units: {
@@ -18,6 +19,7 @@ export default interface AnalysisResponse2D {
   };
   points?: PointInternalForces[];
   supportReactions: SupportReaction[];
+  displacements: PointDisplacements[];
   plot: {
     format: string;
     dataUrl: string;
