@@ -140,68 +140,83 @@
     }
   </svg>
 
-  <h3 class="mb-4 mt-6 text-lg font-bold text-white">Displacements</h3>
+  <h3 class="mb-4 mt-6 text-lg font-bold text-white">Displacements and Elastic Curve</h3>
   <svg
     viewBox="0 0 1000 160"
     class="block w-full overflow-visible"
     role="img"
     aria-label="Axial, vertical, and rotational displacement diagrams"
   >
-    <line
-      [attr.x1]="diagram.left"
-      [attr.x2]="diagram.left + diagram.width"
-      y1="58"
-      y2="58"
-      stroke="#e2e8f0"
-      stroke-width="1"
-    />
-    @for (support of calculatedModel?.supports; track support; let index = $index) {
-      <g
-        [attr.transform]="'translate(' + beamX(support.location, calculatedModel.length) + ', 58)'"
-        class="cursor-help"
-        (mouseenter)="
-          showTooltip($event, 'Support ' + (index + 1), [
-            {
-              label: 'Position',
-              value: formatValue(support.location) + ' ' + (convertedResult?.units?.length ?? ''),
-            },
-          ])
-        "
-        (mousemove)="moveTooltip($event)"
-        (mouseleave)="hideTooltip()"
+    <g stroke="#94a3b8" stroke-width="1.5">
+      <line
+        [attr.x1]="diagram.left"
+        [attr.x2]="diagram.left + diagram.width"
+        y1="58"
+        y2="58"
+        stroke="#e2e8f0"
+        stroke-width="1"
+      />
+      <line [attr.x1]="diagram.left" [attr.x2]="diagram.left" [attr.y1]="18" [attr.y2]="98" />
+      <line
+        [attr.x1]="diagram.left - 4"
+        [attr.x2]="diagram.left + 4"
+        [attr.y1]="58"
+        [attr.y2]="58"
+      />
+      <line
+        [attr.x1]="diagram.left - 4"
+        [attr.x2]="diagram.left + 4"
+        [attr.y1]="98"
+        [attr.y2]="98"
+      />
+      <line
+        [attr.x1]="diagram.left - 4"
+        [attr.x2]="diagram.left + 4"
+        [attr.y1]="18"
+        [attr.y2]="18"
+      />
+      <text
+        [attr.x]="diagram.left - 8"
+        [attr.y]="22"
+        text-anchor="end"
+        fill="#94a3b8"
+        font-size="11"
       >
-        @switch (supportType(support)) {
-          @case ('fixed') {
-            <path d="M 0 -20 0 20" stroke="#cbd5e1" stroke-width="3" />
-            <g stroke="#cbd5e1" stroke-width="1.5">
-              <line x1="0" y1="-20" x2="-10" y2="-14" />
-              <line x1="0" y1="-10" x2="-10" y2="-4" />
-              <line x1="0" y1="0" x2="-10" y2="6" />
-              <line x1="0" y1="10" x2="-10" y2="16" />
-              <line x1="0" y1="20" x2="-10" y2="26" />
-            </g>
-          }
-          @case ('pinned') {
-            <path d="M 0 0 L -12 18 L 12 18 Z" fill="#38bdf8" stroke="#e0f2fe" />
-            <line x1="-17" y1="18" x2="17" y2="18" stroke="#cbd5e1" stroke-width="2" />
-          }
-          @case ('roller') {
-            <path d="M 0 0 L -12 16 L 12 16 Z" fill="#38bdf8" stroke="#e0f2fe" />
-            <circle cx="-7" cy="22" r="2.5" fill="#e0f2fe" />
-            <circle cx="0" cy="22" r="2.5" fill="#e0f2fe" />
-            <circle cx="7" cy="22" r="2.5" fill="#e0f2fe" />
-            <line x1="-17" y1="27" x2="17" y2="27" stroke="#cbd5e1" stroke-width="2" />
-          }
-          @default {
-            <circle cx="0" cy="0" r="6" fill="#a855f7" stroke="#f3e8ff" />
-          }
-        }
-      </g>
-    }
+        {{ formatAxisValue(verticalDisplacementMaximum()) }}
+      </text>
+      <text
+        [attr.x]="diagram.left - 8"
+        [attr.y]="62"
+        text-anchor="end"
+        fill="#94a3b8"
+        font-size="11"
+      >
+        0
+      </text>
+      <text
+        [attr.x]="diagram.left - 8"
+        [attr.y]="98"
+        text-anchor="end"
+        fill="#94a3b8"
+        font-size="11"
+      >
+        {{ formatAxisValue(-verticalDisplacementMaximum()) }}
+      </text>
+    </g>
+    <path
+      [attr.d]="verticalDisplacementPath()"
+      fill="none"
+      stroke="#38bdf8"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
     @for (point of convertedResult?.points; track point.location; let index = $index) {
       <circle
         [attr.cx]="beamX(point.location, convertedResult?.beam?.length)"
-        cy="58"
+        [attr.cy]="
+          verticalDisplacementY(convertedResult?.displacements?.[index]?.vertical ?? 0, 58)
+        "
         r="3.5"
         fill="#f8fafc"
         stroke="#38bdf8"
@@ -216,18 +231,20 @@
             {
               label: 'Axial',
               value:
-                convertedResult?.displacements?.[index]?.axial ??
-                0 + ' ' + (convertedResult?.units?.length ?? ''),
+                (convertedResult?.displacements?.[index]?.axial ?? 0) +
+                ' ' +
+                (convertedResult?.units?.length ?? ''),
             },
             {
               label: 'Vertical',
               value:
-                convertedResult?.displacements?.[index]?.vertical ??
-                0 + ' ' + (convertedResult?.units?.length ?? ''),
+                (convertedResult?.displacements?.[index]?.vertical ?? 0) +
+                ' ' +
+                (convertedResult?.units?.length ?? ''),
             },
             {
               label: 'Rotational',
-              value: convertedResult?.displacements?.[index]?.rotational ?? 0 + ' rad',
+              value: (convertedResult?.displacements?.[index]?.rotational ?? 0) + ' rad',
             },
           ])
         "

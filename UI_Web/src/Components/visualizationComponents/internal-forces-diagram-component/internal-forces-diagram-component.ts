@@ -80,6 +80,31 @@ export class InternalForcesDiagramComponent {
     return baseline - (Number(value) / maximum) * 40;
   }
 
+  verticalDisplacementY(value: number, baselineY = 58): number {
+    const maximum = this.verticalDisplacementMaximum();
+    return baselineY - (Number(value) / maximum) * 42;
+  }
+
+  verticalDisplacementMaximum(): number {
+    const values = (this.convertedResult?.displacements ?? []).map((point) =>
+      Math.abs(Number(point.vertical)),
+    );
+    return Math.max(...values, 1e-6);
+  }
+
+  verticalDisplacementPath(baselineY = 58): string {
+    const points = this.convertedResult?.displacements ?? [];
+    if (!points.length) return '';
+
+    return points
+      .map((point, index) => {
+        const x = this.beamX(point.location, this.convertedResult?.beam.length);
+        const y = this.verticalDisplacementY(point.vertical, baselineY);
+        return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+      })
+      .join(' ');
+  }
+
   forceMaximum(force: InternalForce): number {
     const values = (this.convertedResult?.points ?? []).map((point) =>
       Math.abs(Number(point.internalForces[force])),
